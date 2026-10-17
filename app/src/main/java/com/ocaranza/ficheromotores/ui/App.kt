@@ -103,7 +103,7 @@ fun AjustesScreen(vm: AppVM) {
                     fontSize = 12.sp, color = e.muted)
             }
             SecCard("Acerca de") {
-                Text("Fichero de Motores 1.0 · Registro de motores, pruebas de laboratorio y mantenimiento.", fontSize = 14.sp, color = e.muted)
+                Text("Fichero de Motores ${com.ocaranza.ficheromotores.BuildConfig.VERSION_NAME} · Registro de motores, pruebas de laboratorio y mantenimiento.", fontSize = 14.sp, color = e.muted)
             }
         }
     }
