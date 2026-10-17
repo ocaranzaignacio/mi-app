@@ -117,4 +117,6 @@ fun motorSpec(d: Map<String, String>): String =
         d["rpm"]?.let { "$it rpm" },
         d["tension"]?.let { "$it V" },
         d["carcasa"],
+        d["redI"]?.let { "i = $it" },
+        d["redRpm"]?.let { "salida $it rpm" },
     ).filter { it.isNotBlank() }.joinToString(" · ").ifEmpty { "Sin datos de placa" }

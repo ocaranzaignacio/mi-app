@@ -42,6 +42,7 @@ val TIPOS = listOf(
     "mono" to "Monofásico",
     "cc" to "Corriente continua",
     "bomba" to "Motobomba",
+    "motorred" to "Motorreductor",
 )
 val ESTADOS = listOf(
     "serv" to "En servicio",
@@ -100,6 +101,20 @@ val MOTOR: List<Section> = listOf(
         nm("impulsor", "Ø impulsor", u = "mm"), tx("sello", "Sello mecánico", ph = "MG1 Ø35"),
         tx("succion", "Succión", u = "DN"), tx("descarga", "Descarga", u = "DN"), tx("fluido", "Fluido"),
     ), forTipos = setOf("bomba")),
+    Section("red", "Datos del reductor", listOf(
+        tx("redMarca", "Marca reductor", ph = "SEW, Lentax, Bonfiglioli"), tx("redModelo", "Modelo reductor", ph = "KA67"),
+        tx("redSerie", "Nº de serie reductor"),
+        sel("redTipo", "Tipo de reductor", o("Sinfín corona", "Coaxial helicoidal", "Ejes paralelos", "Ortogonal cónico-helicoidal", "Planetario", "Cicloidal")),
+        tx("redI", "Relación de reducción (i)", ph = "28,5"), nm("redRpm", "Velocidad de salida", u = "rpm"),
+        nm("redPar", "Par de salida", u = "Nm"), nm("redFs", "Factor de servicio reductor"),
+        sel("redMontaje", "Montaje del reductor", o("Con patas", "Con brida", "Eje hueco", "Eje hueco con brazo de reacción", "Eje hueco con disco de contracción")),
+        sel("redPos", "Posición de montaje", o("M1", "M2", "M3", "M4", "M5", "M6")),
+        nm("redEje", "Ø eje de salida", u = "mm"), nm("redEjeHueco", "Ø eje hueco", u = "mm"),
+        tx("redAceite", "Aceite", ph = "ISO VG 220 mineral"), nm("redAceiteL", "Cantidad de aceite", u = "L"),
+        nm("redAceiteInt", "Intervalo cambio de aceite", u = "h"),
+        tx("redRodEnt", "Rodamientos eje de entrada", ph = "6206-2RS"), tx("redRodSal", "Rodamientos eje de salida", ph = "30210"),
+        tx("redRetEnt", "Retén de entrada", ph = "30×47×7"), tx("redRetSal", "Retén de salida", ph = "55×80×10"),
+    ), forTipos = setOf("motorred")),
     Section("rod", "Rodamientos y lubricación", listOf(
         tx("rodLA", "Rodamiento LA", ph = "6309-2Z-C3"), tx("rodLOA", "Rodamiento LOA", ph = "6308-2Z-C3"),
         tx("retLA", "Retén / sello LA", ph = "V-ring 45"), tx("retLOA", "Retén / sello LOA"),
