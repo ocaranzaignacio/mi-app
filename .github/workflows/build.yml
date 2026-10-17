@@ -7,6 +7,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     steps:
       - name: Descargar código
         uses: actions/checkout@v4
@@ -31,3 +33,14 @@ jobs:
           name: FicheroMotores-APK-debug
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+      - name: Publicar APK en Releases
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete ultima-version --yes --cleanup-tag || true
+          gh release create ultima-version app/build/outputs/apk/debug/FicheroMotores-debug.apk \
+            --title "Fichero de Motores (última versión)" \
+            --notes "APK de debug compilado automáticamente del commit ${GITHUB_SHA::7}. Descargá FicheroMotores-debug.apk e instalalo." \
+            --latest
