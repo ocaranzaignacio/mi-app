@@ -76,7 +76,7 @@ val MOTOR: List<Section> = listOf(
         nm("anio", "Año fabricación"), nm("pot", "Potencia"), sel("potU", "Unidad potencia", o("kW", "HP", "CV")),
         tx("tension", "Tensión", ph = "380/660", u = "V"), tx("corriente", "Corriente", ph = "28,5/16,4", u = "A"),
         sel("frec", "Frecuencia", o("50", "60"), u = "Hz"), nm("rpm", "Velocidad", u = "rpm"),
-        sel("polos", "Polos", o("2", "4", "6", "8", "10", "12")), nm("fp", "cos φ"),
+        sel("polos", "Número de polos", o("2", "4", "6", "8", "10", "12")), nm("fp", "cos φ"),
         nm("rend", "Rendimiento", u = "%"), sel("ie", "Clase eficiencia", o("IE1", "IE2", "IE3", "IE4", "IE5")),
         nm("fs", "Factor servicio"), tx("carcasa", "Carcasa (frame)", ph = "160M"),
         sel("aisl", "Clase aislación", o("A", "B", "F", "H")), tx("ip", "Grado IP", ph = "IP55"),
@@ -125,12 +125,6 @@ val MOTOR: List<Section> = listOf(
         nm("asLA", "Asiento rod. en eje LA", u = "mm"), nm("asLOA", "Asiento rod. en eje LOA", u = "mm"),
         nm("entrehierro", "Entrehierro", u = "mm"), ar("ajNotas", "Observaciones de medición", ph = "Ej.: tapa LA ovalizada 0,04 mm"),
     )),
-    Section("bob", "Datos de bobinado", listOf(
-        nm("ranuras", "Ranuras"), sel("tipoBob", "Tipo de bobinado", o("Concéntrico", "Imbricado", "Ondulado")),
-        tx("paso", "Paso", ph = "1-8-10-12"), tx("espiras", "Espiras por bobina"),
-        tx("alambre", "Alambre", ph = "2×0,90 mm"), nm("grupos", "Grupos / fase"),
-        nm("pesoCu", "Peso de cobre", u = "kg"), tx("conexBob", "Conexión interna", ph = "2 en paralelo"),
-    )),
     Section("notas", "Notas", listOf(ar("notas", "Notas generales"))),
 )
 
@@ -176,7 +170,7 @@ val PRUEBA: List<Section> = listOf(
         nm("vac_iu", "Corriente U", u = "A"), nm("vac_iv", "Corriente V", u = "A"), nm("vac_iw", "Corriente W", u = "A"),
     )),
     Section("car", "Prueba en carga", listOf(
-        nm("car_v", "Tensión", u = "V"), nm("car_rpm", "Velocidad", u = "rpm"),
+        nm("car_v", "Tensión", u = "V"), nm("car_f", "Frecuencia", u = "Hz"), nm("car_rpm", "Velocidad", u = "rpm"),
         nm("car_iu", "Corriente U", u = "A"), nm("car_iv", "Corriente V", u = "A"), nm("car_iw", "Corriente W", u = "A"),
     )),
     Section("vib", "Vibraciones (mm/s RMS)", listOf(

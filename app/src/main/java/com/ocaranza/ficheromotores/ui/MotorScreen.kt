@@ -134,7 +134,7 @@ fun MotorScreen(vm: AppVM, motorId: String) {
     }
 
     val tabs = listOf(
-        "placa" to "Placa", "mec" to "Mecánica", "bob" to "Bobinado",
+        "placa" to "Placa", "mec" to "Mecánica",
         "pruebas" to "Pruebas ${pruebas.size}", "mant" to "Mantenimiento ${mants.size}", "fotos" to "Fotos ${m.fotos.size}",
     )
     val tabIndex = tabs.indexOfFirst { it.first == vm.tab }.coerceAtLeast(0)
@@ -188,7 +188,6 @@ fun MotorScreen(vm: AppVM, motorId: String) {
                 when (vm.tab) {
                     "placa" -> PlacaTab(m)
                     "mec" -> MecTab(m)
-                    "bob" -> SecCard(motorSection("bob").title) { FieldsView(motorSection("bob").fields, d) }
                     "pruebas" -> if (pruebas.isEmpty()) Empty("Sin pruebas registradas",
                         "Registrá megado, resistencia de bobinados, vacío, carga, vibraciones y temperaturas. Los índices se calculan solos.")
                     else pruebas.forEach { p -> PruebaCard(p, m, onEdit = { vm.go(Screen.RegForm(KIND_PRUEBA, m.id, p.id)) }, onDelete = { delReg = p }) }
