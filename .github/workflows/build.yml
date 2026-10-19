@@ -63,7 +63,7 @@ jobs:
               echo "::error::${l//%/%25}"
             done
           fi
-          [ -f /tmp/pb/log.txt ] && tail -20 /tmp/pb/log.txt | while IFS= read -r l; do echo "::warning::PB ${l//%/%25}"; done || true
+          [ -f /tmp/pb/log.txt ] && grep -E "ERROR|WARN" /tmp/pb/log.txt | tail -20 | while IFS= read -r l; do echo "::warning::PB ${l//%/%25}"; done || true
 
       - name: Armar el paquete del servidor para Windows
         run: |

@@ -10,10 +10,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Assume.assumeTrue
 import org.junit.Test
-import java.awt.image.BufferedImage
 import java.io.File
 import java.time.Instant
-import javax.imageio.ImageIO
+import java.util.Base64
+
+/** Foto JPEG de 16×12 px para las pruebas. */
+private const val JPEG_PRUEBA = "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAMABADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDmKKKK+kPBP//Z"
 
 private fun iso(ms: Long) = Instant.ofEpochMilli(ms).toString()
 private fun motorItem(m: Motor) = SyncItem(m.id, "motor", null, m.toJson(), m.stamp, false)
@@ -110,9 +112,7 @@ class PocketBaseIntegrationTest {
         assertTrue(enB2.borrados.containsKey(r.id))
 
         // Fotos: A sube, B baja el mismo archivo.
-        val img = File.createTempFile("foto", ".jpg").apply {
-            ImageIO.write(BufferedImage(64, 48, BufferedImage.TYPE_INT_RGB), "jpg", this)
-        }
+        val img = File.createTempFile("foto", ".jpg").apply { writeBytes(Base64.getDecoder().decode(JPEG_PRUEBA)) }
         val nombre = "f$now.jpg"
         a.uploadFoto(nombre, id, img)
         try { a.uploadFoto(nombre, id, img); fail("La foto repetida debería rechazarse") } catch (e: PbException) { assertEquals(400, e.status) }
