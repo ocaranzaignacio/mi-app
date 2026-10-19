@@ -4,6 +4,8 @@ $dir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $dir
 $exe = Join-Path $dir 'pocketbase.exe'
 $tarea = 'FicheroMotoresServidor'
+$data = Join-Path $dir 'pb_data'
+$mig = Join-Path $dir 'pb_migrations'
 
 function Paso($t) { Write-Host ''; Write-Host "== $t" -ForegroundColor Cyan }
 
@@ -26,7 +28,7 @@ try {
   }
 
   Paso 'Preparando la base de datos'
-  & $exe migrate up
+  & $exe migrate up --dir $data --migrationsDir $mig
   if ($LASTEXITCODE -ne 0) { throw 'No se pudo preparar la base de datos.' }
 
   Paso 'Cuenta de administrador (para entrar al panel y crear técnicos)'
@@ -40,7 +42,7 @@ try {
     if ($p1.Length -lt 10) { Write-Host 'Tiene que tener al menos 10 caracteres.' -ForegroundColor Yellow; continue }
     break
   }
-  & $exe superuser upsert $email $p1
+  & $exe superuser upsert $email $p1 --dir $data
   if ($LASTEXITCODE -ne 0) { throw 'No se pudo crear el administrador. Revisá que el email sea válido.' }
 
   Paso 'Permitiendo conexiones en el puerto 8090 (firewall)'
@@ -48,7 +50,7 @@ try {
   New-NetFirewallRule -DisplayName 'Fichero de Motores (8090)' -Direction Inbound -Protocol TCP -LocalPort 8090 -Action Allow -Profile Any | Out-Null
 
   Paso 'Configurando el arranque automático al encender la PC'
-  $accion = New-ScheduledTaskAction -Execute $exe -Argument 'serve --http=0.0.0.0:8090' -WorkingDirectory $dir
+  $accion = New-ScheduledTaskAction -Execute $exe -Argument "serve --http=0.0.0.0:8090 --dir `"$data`" --migrationsDir `"$mig`"" -WorkingDirectory $dir
   $disparador = New-ScheduledTaskTrigger -AtStartup
   $ajustes = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
   $cuenta = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest

@@ -31,9 +31,9 @@ jobs:
         run: |
           curl -sSfL -o /tmp/pb.zip "https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSION}/pocketbase_${PB_VERSION}_linux_amd64.zip"
           mkdir -p /tmp/pb && unzip -q /tmp/pb.zip -d /tmp/pb && cp -r servidor/pb_migrations /tmp/pb/
-          /tmp/pb/pocketbase migrate up
-          /tmp/pb/pocketbase superuser upsert admin@prueba.local AdminPrueba1234
-          nohup /tmp/pb/pocketbase serve --http=127.0.0.1:8090 > /tmp/pb/log.txt 2>&1 &
+          /tmp/pb/pocketbase migrate up --dir /tmp/pb/pb_data --migrationsDir /tmp/pb/pb_migrations
+          /tmp/pb/pocketbase superuser upsert admin@prueba.local AdminPrueba1234 --dir /tmp/pb/pb_data
+          nohup /tmp/pb/pocketbase serve --http=127.0.0.1:8090 --dir /tmp/pb/pb_data --migrationsDir /tmp/pb/pb_migrations > /tmp/pb/log.txt 2>&1 &
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:8090/api/health && break; sleep 1; done
           ST=$(curl -sf -X POST http://127.0.0.1:8090/api/collections/_superusers/auth-with-password \
             -H 'Content-Type: application/json' -d '{"identity":"admin@prueba.local","password":"AdminPrueba1234"}' | jq -r .token)
