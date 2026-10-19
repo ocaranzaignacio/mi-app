@@ -22,6 +22,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CloudDone
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.CloudSync
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
@@ -98,7 +102,19 @@ fun ListScreen(vm: AppVM) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = { vm.go(Screen.Ajustes) }) { Icon(Icons.Filled.Settings, "Ajustes y respaldo") }
+                    if (vm.servidor != null) {
+                        val icono = when {
+                            vm.syncing -> Icons.Filled.CloudSync
+                            vm.syncError != null -> Icons.Filled.CloudOff
+                            vm.pendientes > 0 -> Icons.Filled.CloudUpload
+                            else -> Icons.Filled.CloudDone
+                        }
+                        IconButton(onClick = {
+                            vm.sincronizarAhora()
+                            vm.say(vm.syncError ?: if (vm.pendientes > 0) "Subiendo ${vm.pendientes} cambios…" else "Sincronizando…")
+                        }) { Icon(icono, "Sincronizar", tint = if (vm.syncError != null) e.bad else e.ink) }
+                    }
+                    IconButton(onClick = { vm.go(Screen.Ajustes) }) { Icon(Icons.Filled.Settings, "Ajustes, servidor y respaldo") }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = e.panel),
             )

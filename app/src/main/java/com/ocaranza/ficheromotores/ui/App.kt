@@ -28,6 +28,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -91,9 +98,11 @@ fun AjustesScreen(vm: AppVM) {
                     label = { Text("Nombre del técnico") }, modifier = Modifier.fillMaxWidth(),
                 )
             }
+            ServidorCard(vm)
             SecCard("Respaldo") {
-                Text("Los datos se guardan solo en este teléfono: ${vm.motors.size} motores, $nPruebas pruebas y $nMants mantenimientos. " +
-                    "Exportá un respaldo cada tanto y guardalo en Drive o mandalo por WhatsApp. Las fotos no se incluyen en el respaldo.",
+                Text("En este teléfono hay ${vm.motors.size} motores, $nPruebas pruebas y $nMants mantenimientos. " +
+                    (if (vm.servidor == null) "Sin servidor, los datos están solo acá: exportá un respaldo cada tanto y guardalo en Drive o mandalo por WhatsApp. "
+                    else "También están en el servidor. ") + "Las fotos no se incluyen en el respaldo.",
                     fontSize = 14.sp, color = e.muted)
                 Button(onClick = { shareText(ctx, "respaldo-fichero-motores-${today()}.json", vm.backupJson(), "application/json") },
                     modifier = Modifier.fillMaxWidth()) { Text("Exportar respaldo") }
@@ -107,4 +116,65 @@ fun AjustesScreen(vm: AppVM) {
             }
         }
     }
+}
+
+@Composable
+private fun ServidorCard(vm: AppVM) {
+    val e = C.x
+    val srv = vm.servidor
+    SecCard("Servidor") {
+        if (srv == null) {
+            var url by remember { mutableStateOf("") }
+            var email by remember { mutableStateOf("") }
+            var pass by remember { mutableStateOf("") }
+            var error by remember { mutableStateOf<String?>(null) }
+            var probando by remember { mutableStateOf(false) }
+            Text("Conectá la app al servidor del taller para compartir motores, pruebas, mantenimientos y fotos con los demás técnicos. " +
+                "La app sigue funcionando sin señal y sincroniza sola cuando ve al servidor.", fontSize = 14.sp, color = e.muted)
+            OutlinedTextField(url, { url = it }, Modifier.fillMaxWidth(), singleLine = true,
+                label = { Text("Dirección del servidor") }, placeholder = { Text("http://100.64.12.3:8090") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri))
+            OutlinedTextField(email, { email = it }, Modifier.fillMaxWidth(), singleLine = true,
+                label = { Text("Usuario (email)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email))
+            OutlinedTextField(pass, { pass = it }, Modifier.fillMaxWidth(), singleLine = true,
+                label = { Text("Contraseña") }, visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
+            error?.let { Text(it, color = e.bad, fontSize = 14.sp) }
+            Button(
+                onClick = {
+                    probando = true; error = null
+                    vm.conectar(url, email, pass) { err ->
+                        probando = false
+                        if (err == null) vm.say("Conectado al servidor") else error = err
+                    }
+                },
+                enabled = !probando, modifier = Modifier.fillMaxWidth(),
+            ) { Text(if (probando) "Conectando…" else "Conectar") }
+            Text("La dirección y el usuario te los da quien instaló el servidor en la PC del taller.", fontSize = 12.sp, color = e.muted)
+        } else {
+            var confirmar by remember { mutableStateOf(false) }
+            Text("Conectado a ${srv.url} como ${srv.email}.", fontSize = 14.sp, color = e.ink)
+            SyncStatusLine(vm)
+            Button(onClick = { vm.sincronizarAhora() }, enabled = !vm.syncing, modifier = Modifier.fillMaxWidth()) {
+                Text(if (vm.syncing) "Sincronizando…" else "Sincronizar ahora")
+            }
+            OutlinedButton(onClick = { confirmar = true }, modifier = Modifier.fillMaxWidth()) { Text("Desconectar") }
+            if (confirmar) ConfirmDialog("Desconectar del servidor",
+                "Los datos quedan en este teléfono, pero dejan de sincronizarse con los demás técnicos.", "Desconectar",
+                { vm.desconectar(); vm.say("Desconectado del servidor") }) { confirmar = false }
+        }
+    }
+}
+
+@Composable
+fun SyncStatusLine(vm: AppVM) {
+    val e = C.x
+    val hora = vm.lastSync?.let { java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneId.systemDefault()).toLocalTime() }
+    val txt = when {
+        vm.syncing -> "Sincronizando…"
+        vm.syncError != null -> vm.syncError!! + " Se vuelve a intentar solo."
+        hora != null -> "Sincronizado a las %02d:%02d.".format(hora.hour, hora.minute)
+        else -> "Esperando la primera sincronización."
+    } + if (vm.pendientes > 0) " ${vm.pendientes} ${if (vm.pendientes == 1) "cambio" else "cambios"} por subir." else ""
+    Text(txt, fontSize = 13.sp, color = if (vm.syncError != null) e.bad else e.muted)
 }

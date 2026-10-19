@@ -438,7 +438,7 @@ private fun FotosTab(vm: AppVM, m: Motor) {
             m.fotos.chunked(3).forEach { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     row.forEach { f ->
-                        Thumb(vm.repo.fotoFile(f.file), Modifier.weight(1f).aspectRatio(4f / 3f).clickable { viewing = f.file })
+                        Thumb(vm.repo.fotoFile(f.file), Modifier.weight(1f).aspectRatio(4f / 3f).clickable { viewing = f.file }, rev = vm.fotosRev)
                     }
                     repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
                 }
@@ -450,7 +450,7 @@ private fun FotosTab(vm: AppVM, m: Motor) {
         Dialog(onDismissRequest = { viewing = null }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
             Column(Modifier.fillMaxSize().background(Color.Black).padding(16.dp), verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally) {
-                Thumb(vm.repo.fotoFile(file), Modifier.fillMaxWidth().weight(1f), fit = true, maxSide = 2000)
+                Thumb(vm.repo.fotoFile(file), Modifier.fillMaxWidth().weight(1f), fit = true, maxSide = 2000, rev = vm.fotosRev)
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(top = 12.dp)) {
                     TextButton(onClick = { confirm = true }) { Text("Quitar foto", color = Color(0xFFF08B83)) }
                     TextButton(onClick = { viewing = null }) { Text("Cerrar", color = Color.White) }
@@ -463,9 +463,9 @@ private fun FotosTab(vm: AppVM, m: Motor) {
 }
 
 @Composable
-private fun Thumb(file: File, modifier: Modifier, fit: Boolean = false, maxSide: Int = 500) {
+private fun Thumb(file: File, modifier: Modifier, fit: Boolean = false, maxSide: Int = 500, rev: Int = 0) {
     val e = C.x
-    val bmp by produceState<Bitmap?>(null, file.path) {
+    val bmp by produceState<Bitmap?>(null, file.path, rev) {
         value = withContext(Dispatchers.IO) { decodeSampled(file, maxSide) }
     }
     Box(modifier.background(e.panel2, RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {

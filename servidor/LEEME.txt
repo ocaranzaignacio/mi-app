@@ -1,0 +1,41 @@
+﻿FICHERO DE MOTORES - SERVIDOR PARA WINDOWS
+==========================================
+
+Esta carpeta es el servidor donde se guardan los motores, pruebas,
+mantenimientos y fotos de todos los técnicos.
+
+INSTALAR (una sola vez)
+1. Mové esta carpeta a C:\FicheroServidor (no la dejes en Descargas ni en el Escritorio).
+2. Hacé doble clic en 1-INSTALAR.bat y aceptá el permiso de administrador.
+3. Escribí un email y una contraseña de administrador (mínimo 10 caracteres).
+   Guardalos: los vas a necesitar para entrar al panel.
+4. Al terminar se abre el panel en el navegador. Entrá con ese email y contraseña.
+
+CREAR UN USUARIO PARA CADA TÉCNICO
+1. En el panel, a la izquierda, tocá "users".
+2. Tocá "+ New record".
+3. Completá email, password y repetí el password en "Password confirm".
+   En "name" poné el nombre del técnico. Activá "Verified".
+4. Tocá "Create". Ese email y contraseña son los que el técnico pone en la app.
+
+ACCESO DESDE AFUERA DEL TALLER (Tailscale)
+1. En esta PC instalá Tailscale desde https://tailscale.com/download e iniciá sesión.
+2. En cada celular instalá la app Tailscale desde Play Store e iniciá sesión con la misma cuenta.
+3. En esta PC, el ícono de Tailscale (al lado del reloj) muestra la dirección de la PC: 100.x.y.z
+4. En la app, Ajustes > Servidor, poné http://100.x.y.z:8090 (con los números de tu PC).
+   Esa dirección funciona dentro y fuera del taller.
+
+DATOS Y RESPALDOS
+- Todo se guarda en la carpeta pb_data. No la borres.
+- El servidor hace un respaldo automático todos los días a las 3:00 y guarda los últimos 14.
+  Se ven y descargan en el panel: Settings > Backups.
+- Conviene copiar cada tanto esos respaldos a un pendrive o a Drive.
+
+OTROS ARCHIVOS
+- abrir-panel.bat: abre el panel del servidor en el navegador.
+- desinstalar.bat: detiene el servidor y quita el arranque automático (no borra datos).
+- Para actualizar el servidor: reemplazá pocketbase.exe y pb_migrations por los nuevos
+  y volvé a ejecutar 1-INSTALAR.bat. Los datos se conservan.
+
+La PC tiene que quedar encendida y conectada a internet. Si se corta la luz,
+el servidor vuelve a arrancar solo cuando la PC se enciende.

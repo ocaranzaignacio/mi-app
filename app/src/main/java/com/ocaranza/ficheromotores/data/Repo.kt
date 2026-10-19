@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
 import android.media.ExifInterface
+import com.ocaranza.ficheromotores.sync.SyncState
 import com.ocaranza.ficheromotores.util.newId
 import java.io.File
 
@@ -71,6 +72,24 @@ class Repo(private val ctx: Context) {
             name
         } catch (e: Exception) {
             null
+        }
+    }
+
+    private val syncFile = File(ctx.filesDir, "sync.json")
+
+    fun loadSync(): SyncState = try {
+        if (syncFile.exists()) SyncState.fromJson(syncFile.readText()) else SyncState()
+    } catch (e: Exception) {
+        SyncState()
+    }
+
+    @Synchronized
+    fun saveSync(s: SyncState) {
+        val tmp = File(ctx.filesDir, "sync.json.tmp")
+        tmp.writeText(s.toJson().toString())
+        if (!tmp.renameTo(syncFile)) {
+            syncFile.writeText(tmp.readText())
+            tmp.delete()
         }
     }
 

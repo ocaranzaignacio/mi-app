@@ -4,6 +4,9 @@ on:
   push:
   workflow_dispatch:
 
+env:
+  PB_VERSION: '0.40.4'
+
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -24,8 +27,37 @@ jobs:
         with:
           gradle-version: '8.9'
 
+      - name: Levantar un servidor PocketBase de prueba
+        run: |
+          curl -sSfL -o /tmp/pb.zip "https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSION}/pocketbase_${PB_VERSION}_linux_amd64.zip"
+          mkdir -p /tmp/pb && unzip -q /tmp/pb.zip -d /tmp/pb && cp -r servidor/pb_migrations /tmp/pb/
+          /tmp/pb/pocketbase migrate up
+          /tmp/pb/pocketbase superuser upsert admin@prueba.local AdminPrueba1234
+          nohup /tmp/pb/pocketbase serve --http=127.0.0.1:8090 > /tmp/pb/log.txt 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8090/api/health && break; sleep 1; done
+          ST=$(curl -sf -X POST http://127.0.0.1:8090/api/collections/_superusers/auth-with-password \
+            -H 'Content-Type: application/json' -d '{"identity":"admin@prueba.local","password":"AdminPrueba1234"}' | jq -r .token)
+          curl -sf -X POST http://127.0.0.1:8090/api/collections/users/records -H "Authorization: $ST" \
+            -H 'Content-Type: application/json' \
+            -d '{"email":"tecnico@prueba.local","password":"Tecnico1234","passwordConfirm":"Tecnico1234","verified":true,"name":"Prueba"}' > /dev/null
+
+      - name: Probar la sincronización
+        env:
+          PB_URL: http://127.0.0.1:8090
+          PB_USER: tecnico@prueba.local
+          PB_PASS: Tecnico1234
+        run: gradle testDebugUnitTest --stacktrace --no-daemon
+
       - name: Compilar APK de debug
         run: gradle assembleDebug --stacktrace --no-daemon
+
+      - name: Armar el paquete del servidor para Windows
+        run: |
+          curl -sSfL -o /tmp/pbwin.zip "https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSION}/pocketbase_${PB_VERSION}_windows_amd64.zip"
+          mkdir -p dist/FicheroServidor
+          unzip -q /tmp/pbwin.zip pocketbase.exe -d dist/FicheroServidor
+          cp -r servidor/. dist/FicheroServidor/
+          (cd dist && zip -qr ../FicheroServidor-Windows.zip FicheroServidor)
 
       - name: Subir APK
         uses: actions/upload-artifact@v4
@@ -34,13 +66,15 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      - name: Publicar APK en Releases
+      - name: Publicar APK y servidor en Releases
         if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete ultima-version --yes --cleanup-tag || true
-          gh release create ultima-version app/build/outputs/apk/debug/FicheroMotores-debug.apk \
+          gh release create ultima-version \
+            app/build/outputs/apk/debug/FicheroMotores-debug.apk \
+            FicheroServidor-Windows.zip \
             --title "Fichero de Motores (última versión)" \
-            --notes "APK de debug compilado automáticamente del commit ${GITHUB_SHA::7}. Descargá FicheroMotores-debug.apk e instalalo." \
+            --notes "Compilado automáticamente del commit ${GITHUB_SHA::7}. FicheroMotores-debug.apk es la app para Android. FicheroServidor-Windows.zip es el servidor para la PC del taller (PocketBase ${PB_VERSION})." \
             --latest
