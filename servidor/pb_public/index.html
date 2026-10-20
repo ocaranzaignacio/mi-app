@@ -1,0 +1,880 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Fichero de Motores</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: single-column workshop app; sticky bar, list of motor cards, detail with tabs, nameplate-style data plate. */
+:root{
+  --bg:#e9edf0; --panel:#ffffff; --panel-2:#f4f6f8; --ink:#16212b; --muted:#5b6874; --line:#cfd7de;
+  --accent:#1c5aa0; --accent-ink:#ffffff; --accent-soft:#dde8f5;
+  --plate:#d9dee3; --plate-ink:#1e2a33; --plate-line:#a9b3bc;
+  --ok:#1f7a45; --ok-soft:#dcf0e3; --obs:#9a6200; --obs-soft:#fbeccd; --bad:#b3261e; --bad-soft:#f8dcd9;
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#11171c; --panel:#1a2229; --panel-2:#212b33; --ink:#e3e9ee; --muted:#93a1ad; --line:#2f3b45;
+  --accent:#6aa5ea; --accent-ink:#0b1a2b; --accent-soft:#1d3047;
+  --plate:#2a333b; --plate-ink:#e1e7ec; --plate-line:#46535e;
+  --ok:#6fcf97; --ok-soft:#173326; --obs:#e8b04b; --obs-soft:#3a2d12; --bad:#f08b83; --bad-soft:#3d1c1a;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11171c; --panel:#1a2229; --panel-2:#212b33; --ink:#e3e9ee; --muted:#93a1ad; --line:#2f3b45;
+  --accent:#6aa5ea; --accent-ink:#0b1a2b; --accent-soft:#1d3047;
+  --plate:#2a333b; --plate-ink:#e1e7ec; --plate-line:#46535e;
+  --ok:#6fcf97; --ok-soft:#173326; --obs:#e8b04b; --obs-soft:#3a2d12; --bad:#f08b83; --bad-soft:#3d1c1a;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--panel)}
+button,input,select,textarea{font:inherit;color:inherit}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--panel);border-bottom:1px solid var(--line)}
+.top-in{display:flex;align-items:center;gap:10px;min-height:56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:880px;margin:0 auto}
+.top h1{font-family:var(--f-display);font-weight:700;font-size:22px;letter-spacing:.02em;margin:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
+.top h1 small{display:block;font-family:var(--f-body);font-weight:500;font-size:12px;letter-spacing:.04em;color:var(--muted);text-transform:none}
+.iconbtn{width:40px;height:40px;border-radius:50%;border:0;background:transparent;display:grid;place-items:center;cursor:pointer;flex:none}
+.iconbtn:hover{background:var(--panel-2)}
+.iconbtn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+main{max-width:880px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 120px;display:flex;flex-direction:column;gap:14px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* list */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px}
+.stat b{display:block;font-family:var(--f-display);font-size:28px;line-height:1;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.stat.alert b{color:var(--bad)}
+.search{display:flex;gap:8px}
+.search input{flex:1;min-width:0}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.mlist{display:flex;flex-direction:column;gap:8px}
+.mcard{display:grid;grid-template-columns:1fr auto;gap:4px 10px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;cursor:pointer;text-align:left;width:100%}
+.mcard:hover{border-color:var(--accent)}
+.mcard .code{font-family:var(--f-mono);font-weight:600;font-size:16px;min-width:0;overflow-wrap:anywhere}
+.mcard .spec{grid-column:1/-1;color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
+.mcard .badges{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.mcard .kind{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;align-self:center}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:3px 8px;border-radius:5px;background:var(--panel-2);color:var(--muted);white-space:nowrap}
+.badge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.badge.ok{background:var(--ok-soft);color:var(--ok)}
+.badge.obs{background:var(--obs-soft);color:var(--obs)}
+.badge.mal{background:var(--bad-soft);color:var(--bad)}
+.badge.info{background:var(--accent-soft);color:var(--accent)}
+.badge.plain::before{display:none}
+.empty{background:var(--panel);border:1px dashed var(--line);border-radius:var(--r);padding:28px 20px;text-align:center;color:var(--muted)}
+.empty h2{font-family:var(--f-display);font-size:22px;color:var(--ink);margin:0 0 6px;text-transform:uppercase;letter-spacing:.03em}
+.empty p{margin:0 auto;max-width:42ch}
+
+/* detail */
+.tabs{display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--line);scrollbar-width:none;margin-inline:-4px}
+.tab{flex:none;border:0;background:transparent;padding:10px 12px;font-family:var(--f-display);font-weight:600;font-size:16px;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer}
+.tab[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+.tab .n{font-family:var(--f-mono);font-size:12px;margin-left:4px}
+.headrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.headrow .spacer{flex:1}
+.plate{background:var(--plate);color:var(--plate-ink);border-radius:6px;padding:14px;border:1px solid var(--plate-line);box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+.plate-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;border-bottom:2px solid var(--plate-line);padding-bottom:8px;margin-bottom:8px}
+.plate-h b{font-family:var(--f-display);font-size:24px;text-transform:uppercase;letter-spacing:.04em}
+.plate-h span{font-family:var(--f-mono);font-size:12px;overflow-wrap:anywhere;text-align:right}
+.plate-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:0;border-left:1px solid var(--plate-line);border-top:1px solid var(--plate-line)}
+.plate-g div{border-right:1px solid var(--plate-line);border-bottom:1px solid var(--plate-line);padding:6px 8px;min-width:0}
+.plate-g dt{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;opacity:.75}
+.plate-g dd{margin:0;font-family:var(--f-mono);font-weight:600;font-size:14px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.sec{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.sec h3{font-family:var(--f-display);font-weight:600;font-size:17px;letter-spacing:.05em;text-transform:uppercase;margin:0 0 10px;color:var(--muted)}
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px 14px;margin:0}
+.kv dt{font-size:12px;color:var(--muted)}
+.kv dd{margin:0;font-family:var(--f-mono);font-size:14px;font-weight:600;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.none{color:var(--muted);font-size:14px;margin:0}
+.flange{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:center}
+.flange svg{width:100%;max-width:150px;height:auto}
+@media (max-width:460px){.flange{grid-template-columns:1fr}.flange svg{max-width:130px;margin:0 auto}}
+.rec{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.rec-h{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.rec-h .date{font-family:var(--f-mono);font-weight:600}
+.rec-h .who{color:var(--muted);font-size:13px}
+.rec-h .spacer{flex:1}
+.rec p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.calc{display:flex;flex-direction:column;gap:6px}
+.calc-row{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;padding:8px 10px;border-radius:7px;background:var(--panel-2)}
+.calc-row .v{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums}
+.calc-row .note{grid-column:1/-1;font-size:12px;color:var(--muted)}
+.calc-row.ok{background:var(--ok-soft)} .calc-row.ok .v{color:var(--ok)}
+.calc-row.obs{background:var(--obs-soft)} .calc-row.obs .v{color:var(--obs)}
+.calc-row.mal{background:var(--bad-soft)} .calc-row.mal .v{color:var(--bad)}
+.subh{font-family:var(--f-display);font-weight:600;font-size:15px;text-transform:uppercase;letter-spacing:.05em;margin:4px 0 0}
+details.more summary{cursor:pointer;color:var(--accent);font-size:14px;font-weight:600}
+details.more[open] summary{margin-bottom:8px}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.photo{position:relative;border-radius:8px;overflow:hidden;background:var(--panel-2);aspect-ratio:4/3;max-width:100%;border:0;padding:0;cursor:pointer}
+.photo img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* forms */
+form{display:flex;flex-direction:column;gap:12px}
+fieldset{border:1px solid var(--line);border-radius:var(--r);background:var(--panel);padding:12px 14px 14px;margin:0;min-width:0}
+legend{font-family:var(--f-display);font-weight:600;font-size:17px;text-transform:uppercase;letter-spacing:.05em;padding:0 6px;color:var(--accent)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+@media (min-width:640px){.grid{grid-template-columns:repeat(3,1fr)}}
+.fld{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fld.wide{grid-column:1/-1}
+.fld label{font-size:13px;color:var(--muted);font-weight:500}
+.fld label .req{color:var(--bad)}
+.inwrap{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:8px;background:var(--panel-2);overflow:hidden}
+.inwrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.inwrap input,.inwrap select,.inwrap textarea{flex:1;min-width:0;border:0;background:transparent;padding:9px 10px;outline:none;font-size:15px}
+.inwrap textarea{min-height:84px;resize:vertical}
+.inwrap .u{display:flex;align-items:center;padding:0 10px;font-family:var(--f-mono);font-size:12px;color:var(--muted);background:var(--panel);border-left:1px solid var(--line)}
+input[type=search],.plain-in{border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:10px 12px;outline:none;font-size:15px}
+input[type=search]:focus{border-color:var(--accent)}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.checks label{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:8px;padding:8px 11px;background:var(--panel-2);cursor:pointer;font-size:14px}
+.checks input{accent-color:var(--accent);width:17px;height:17px}
+.live{border:1px dashed var(--accent);border-radius:8px;padding:10px;margin-top:10px}
+.live:empty{display:none}
+.actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:9px 14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:14px}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.danger{color:var(--bad)}
+.btn.small{padding:6px 10px;font-size:13px}
+.btn:disabled{opacity:.55;cursor:default}
+.fab{position:fixed;right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:8;border:0;border-radius:16px;background:var(--accent);color:var(--accent-ink);font-weight:600;font-size:15px;padding:15px 20px;display:flex;align-items:center;gap:8px;box-shadow:0 6px 18px rgba(10,30,60,.28);cursor:pointer}
+.fab svg{width:20px;height:20px;stroke:currentColor;stroke-width:2.4;fill:none;stroke-linecap:round}
+.sheet-bg{position:fixed;inset:0;z-index:20;background:rgba(8,14,20,.55);display:flex;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+.sheet{background:var(--panel);border-radius:14px;padding:18px;max-width:420px;width:100%;display:flex;flex-direction:column;gap:12px}
+.sheet h2{margin:0;font-family:var(--f-display);font-size:22px;text-transform:uppercase;letter-spacing:.03em}
+.sheet p{margin:0;color:var(--muted)}
+.viewer{position:fixed;inset:0;z-index:21;background:rgba(0,0,0,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px}
+.viewer img{max-height:80%;max-width:100%;object-fit:contain}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(86px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;max-width:calc(100% - 32px)}
+.notice{background:var(--obs-soft);color:var(--ink);border-radius:var(--r);padding:12px 14px;font-size:14px}
+.muted{color:var(--muted)}
+.login{max-width:380px;margin:40px auto 0;width:100%}
+.login .sec{display:flex;flex-direction:column;gap:12px;padding:20px}
+.login h2{font-family:var(--f-display);font-size:24px;text-transform:uppercase;letter-spacing:.03em;margin:0}
+.err{color:var(--bad);font-size:14px;margin:0}
+.nophoto{display:grid;place-items:center;font-size:12px;color:var(--muted);text-align:center;padding:8px;height:100%}
+@media (min-width:900px){main,.top-in{max-width:1040px}.mlist{display:grid;grid-template-columns:1fr 1fr;gap:10px}}
+.tiny{font-size:12px;color:var(--muted);margin:6px 0 0}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.aist{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+.aist th,.aist td{padding:6px 5px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.aist thead th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+.aist tbody th{text-align:left;font-weight:600}
+.aist td{font-family:var(--f-mono)}
+.aist td.ix{font-weight:600;border-radius:4px}
+.aist td.ok{color:var(--ok);background:var(--ok-soft)}.aist td.obs{color:var(--obs);background:var(--obs-soft)}.aist td.mal{color:var(--bad);background:var(--bad-soft)}
+.aist.edit td{padding:4px 3px}
+.aist.edit input{width:100%;min-width:58px;border:1px solid var(--line);border-radius:6px;background:var(--panel-2);padding:7px 6px;text-align:right;font-family:var(--f-mono);font-size:14px;outline:none}
+.aist.edit input:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.pills{display:flex;flex-wrap:wrap;gap:6px}.pills:empty{display:none}
+.resbar{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}.resbar .spacer{flex:1}
+.advpanel .grid{grid-template-columns:1fr 1fr}@media (min-width:640px){.advpanel .grid{grid-template-columns:repeat(4,1fr)}}
+#advBtn span{font-family:var(--f-mono);font-size:12px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;flex-direction:column;gap:2px;text-align:left;border:1px solid var(--line);background:var(--panel-2);border-radius:10px;padding:11px 13px;cursor:pointer}
+.opt:hover{border-color:var(--accent)}.opt b{font-weight:600}.opt span{font-size:13px;color:var(--muted)}
+.sheet{max-height:calc(100% - 16px);overflow-y:auto}
+@media (prefers-reduced-motion:no-preference){.mcard,.btn,.chip{transition:border-color .15s,background .15s}}
+</style>
+
+<header class="top"><div class="top-in">
+  <button class="iconbtn" id="back" aria-label="Volver" hidden><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+  <h1 id="ttl">Fichero de Motores<small id="sub">Registro técnico del taller</small></h1>
+  <button class="iconbtn" id="refreshBtn" aria-label="Actualizar" title="Traer los últimos cambios" hidden><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg></button>
+  <button class="iconbtn" id="exportBtn" aria-label="Exportar planilla" title="Exportar planilla CSV"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></button>
+  <button class="iconbtn" id="logoutBtn" aria-label="Cerrar sesión" title="Cerrar sesión" hidden><svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l-5-5 5-5M5 12h11"/></svg></button>
+</div></header>
+<main id="app">
+  <div class="empty"><h2>Cargando fichero…</h2><p>Conectando con el servidor del taller.</p></div>
+</main>
+<button class="fab" id="fab" hidden><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span id="fabTxt">Nuevo motor</span></button>
+<div id="layer"></div>
+
+<script>
+/* ---------- esquemas ---------- */
+const TIPOS={tri:'Trifásico inducción',mono:'Monofásico',cc:'Corriente continua',bomba:'Motobomba',motorred:'Motorreductor'};
+const ESTADOS={serv:'En servicio',taller:'En taller',reserva:'Reserva',baja:'Baja'};
+const o=a=>Object.fromEntries(a.map(x=>[x,x]));
+const MOTOR=[
+ {id:'ident',t:'Identificación',f:[
+  ['codigo','Código / TAG','text',{req:1,ph:'MT-0142'}],
+  ['tipo','Tipo de motor','select',{opts:TIPOS,req:1}],
+  ['estado','Estado','select',{opts:ESTADOS}],
+  ['cliente','Cliente / planta','text'],
+  ['ubicacion','Ubicación','text',{ph:'Molienda, línea 2'}],
+  ['equipo','Equipo accionado','text',{ph:'Bomba P-301'}]]},
+ {id:'placa',t:'Datos de placa',f:[
+  ['marca','Marca','text',{ph:'WEG'}],['modelo','Modelo','text'],['serie','Nº de serie','text'],
+  ['anio','Año fabricación','num'],['pot','Potencia','num'],['potU','Unidad potencia','select',{opts:o(['kW','HP','CV'])}],
+  ['tension','Tensión','text',{u:'V',ph:'380/660'}],['corriente','Corriente','text',{u:'A',ph:'28,5/16,4'}],
+  ['frec','Frecuencia','select',{opts:o(['50','60']),u:'Hz'}],['rpm','Velocidad','num',{u:'rpm'}],
+  ['polos','Número de polos','select',{opts:o(['2','4','6','8','10','12'])}],['fp','cos φ','num'],
+  ['rend','Rendimiento','num',{u:'%'}],['ie','Clase eficiencia','select',{opts:o(['IE1','IE2','IE3','IE4','IE5'])}],
+  ['fs','Factor servicio','num'],['carcasa','Carcasa (frame)','text',{ph:'160M'}],
+  ['aisl','Clase aislación','select',{opts:o(['A','B','F','H'])}],['ip','Grado IP','text',{ph:'IP55'}],
+  ['servicio','Servicio','text',{ph:'S1'}],['conexion','Conexión','select',{opts:o(['Δ','Y','Δ/Y','YY/Y','Dahlander','Serie/paralelo'])}],
+  ['tamb','Temp. ambiente máx.','num',{u:'°C'}],['alt','Altitud máx.','num',{u:'m'}],
+  ['peso','Peso','num',{u:'kg'}],['norma','Norma','text',{ph:'IEC 60034-1'}]]},
+ {id:'mono',t:'Datos monofásico',when:d=>d.tipo==='mono',f:[
+  ['capArr','Capacitor arranque','text',{u:'µF',ph:'216-259'}],['capArrV','Tensión cap. arranque','num',{u:'V'}],
+  ['capPerm','Capacitor permanente','num',{u:'µF'}],['capPermV','Tensión cap. permanente','num',{u:'V'}],
+  ['centrif','Interruptor centrífugo','select',{opts:o(['Sí','No'])}],['protTerm','Protector térmico','select',{opts:o(['Sí','No'])}]]},
+ {id:'cc',t:'Datos corriente continua',when:d=>d.tipo==='cc',f:[
+  ['excit','Excitación','select',{opts:o(['Independiente','Shunt','Serie','Compuesta','Imanes permanentes'])}],
+  ['vInd','Tensión inducido','num',{u:'V'}],['iInd','Corriente inducido','num',{u:'A'}],
+  ['vCampo','Tensión campo','num',{u:'V'}],['iCampo','Corriente campo','num',{u:'A'}],
+  ['escob','Medida escobillas','text',{ph:'12,5×32×40 mm'}],['nEscob','Cantidad escobillas','num']]},
+ {id:'bomba',t:'Datos de bomba',when:d=>d.tipo==='bomba',f:[
+  ['caudal','Caudal','num',{u:'m³/h'}],['altura','Altura manométrica','num',{u:'m'}],
+  ['impulsor','Ø impulsor','num',{u:'mm'}],['sello','Sello mecánico','text',{ph:'MG1 Ø35'}],
+  ['succion','Succión','text',{u:'DN'}],['descarga','Descarga','text',{u:'DN'}],['fluido','Fluido','text']]},
+ {id:'red',t:'Datos del reductor',when:d=>d.tipo==='motorred',f:[
+  ['redMarca','Marca reductor','text',{ph:'SEW, Lentax, Bonfiglioli'}],['redModelo','Modelo reductor','text',{ph:'KA67'}],
+  ['redSerie','Nº de serie reductor','text'],
+  ['redTipo','Tipo de reductor','select',{opts:o(['Sinfín corona','Coaxial helicoidal','Ejes paralelos','Ortogonal cónico-helicoidal','Planetario','Cicloidal'])}],
+  ['redI','Relación de reducción (i)','text',{ph:'28,5'}],['redRpm','Velocidad de salida','num',{u:'rpm'}],
+  ['redPar','Par de salida','num',{u:'Nm'}],['redFs','Factor de servicio reductor','num'],
+  ['redMontaje','Montaje del reductor','select',{opts:o(['Con patas','Con brida','Eje hueco','Eje hueco con brazo de reacción','Eje hueco con disco de contracción'])}],
+  ['redPos','Posición de montaje','select',{opts:o(['M1','M2','M3','M4','M5','M6'])}],
+  ['redEje','Ø eje de salida','num',{u:'mm'}],['redEjeHueco','Ø eje hueco','num',{u:'mm'}],
+  ['redAceite','Aceite','text',{ph:'ISO VG 220 mineral'}],['redAceiteL','Cantidad de aceite','num',{u:'L'}],
+  ['redAceiteInt','Intervalo cambio de aceite','num',{u:'h'}],
+  ['redRodEnt','Rodamientos eje de entrada','text',{ph:'6206-2RS'}],['redRodSal','Rodamientos eje de salida','text',{ph:'30210'}],
+  ['redRetEnt','Retén de entrada','text',{ph:'30×47×7'}],['redRetSal','Retén de salida','text',{ph:'55×80×10'}]]},
+ {id:'rod',t:'Rodamientos y lubricación',f:[
+  ['rodLA','Rodamiento LA','text',{ph:'6309-2Z-C3'}],['rodLOA','Rodamiento LOA','text',{ph:'6308-2Z-C3'}],
+  ['retLA','Retén / sello LA','text',{ph:'V-ring 45'}],['retLOA','Retén / sello LOA','text'],
+  ['grasa','Grasa','text',{ph:'Polyrex EM'}],['lubInt','Intervalo lubricación','num',{u:'h'}],['lubCant','Cantidad grasa','num',{u:'g'}]]},
+ {id:'brida',t:'Montaje y brida',f:[
+  ['forma','Forma constructiva','select',{opts:o(['B3','B5','B35','B14','B34','V1','V3','V5','V6','V18'])}],
+  ['brida','Tipo de brida','select',{opts:o(['Sin brida','FF (agujeros pasantes)','FT (agujeros roscados)','NEMA C-face','NEMA D-flange'])}],
+  ['bM','M · círculo agujeros','num',{u:'mm'}],['bN','N · Ø encastre','num',{u:'mm'}],['bP','P · Ø exterior','num',{u:'mm'}],
+  ['bS','S · Ø / rosca agujeros','text',{u:'mm',ph:'14 / M12'}],['bCant','Cantidad agujeros','num'],['bT','T · altura encastre','num',{u:'mm'}],
+  ['bLA','LA · espesor brida','num',{u:'mm'}]]},
+ {id:'eje',t:'Eje y patas',f:[
+  ['ejeD','D · Ø eje LA','num',{u:'mm'}],['ejeE','E · largo eje','num',{u:'mm'}],
+  ['chF','F · ancho chaveta','num',{u:'mm'}],['chGA','GA · altura eje+chaveta','num',{u:'mm'}],
+  ['ejeRosca','Rosca punta eje','text',{ph:'M16'}],['ejeDLOA','Ø eje LOA','num',{u:'mm'}],
+  ['H','H · altura de eje','num',{u:'mm'}],['A','A · entre agujeros (frente)','num',{u:'mm'}],
+  ['B','B · entre agujeros (lateral)','num',{u:'mm'}],['C','C · eje a 1º agujero','num',{u:'mm'}],['K','K · Ø agujero pata','num',{u:'mm'}]]},
+ {id:'aj',t:'Medidas estructurales y ajustes',f:[
+  ['L','L · largo total','num',{u:'mm'}],['HD','HD · altura total','num',{u:'mm'}],
+  ['alojLA','Alojamiento rod. LA (tapa)','num',{u:'mm'}],['alojLOA','Alojamiento rod. LOA (tapa)','num',{u:'mm'}],
+  ['asLA','Asiento rod. en eje LA','num',{u:'mm'}],['asLOA','Asiento rod. en eje LOA','num',{u:'mm'}],
+  ['entrehierro','Entrehierro','num',{u:'mm'}],['ajNotas','Observaciones de medición','area',{wide:1,ph:'Ej.: tapa LA ovalizada 0,04 mm'}]]},
+ {id:'notas',t:'Notas',f:[['notas','Notas generales','area',{wide:1}]]}
+];
+const PRUEBA_GEN=[
+ ['fecha','Fecha','date',{req:1}],
+ ['motivo','Motivo','select',{opts:o(['Recepción','Diagnóstico','Post-reparación','Rutina','Entrega'])}],
+ ['instrumento','Instrumentos','text',{ph:'Megger MIT525, pinza Fluke 376'}]
+];
+const PRUEBA_AMB=[
+ ['amb_t','Temperatura ambiente','num',{u:'°C'}],
+ ['amb_h','Humedad ambiente','num',{u:'% HR'}]
+];
+const ambT=p=>p.amb_t??p.tem_amb??p.bob_temp;
+const AIS_P=[['ut','U – Carcasa'],['vt','V – Carcasa'],['wt','W – Carcasa'],['uv','U – V'],['vw','V – W'],['wu','W – U']];
+const AIS_T=[['30','30 s'],['1','1 min'],['10','10 min']];
+const PRUEBA=[
+ {id:'ais',t:'Resistencia de aislamiento',f:[
+  ['ais_v','Tensión de prueba','select',{opts:{'250':'250 V','500':'500 V','1000':'1000 V','2500':'2500 V','5000':'5000 V'}}],
+  ...AIS_P.flatMap(([q,ql])=>AIS_T.map(([t,tl])=>['ais_'+q+'_'+t,`${ql} · ${tl}`,'num',{u:'MΩ'}]))]},
+ {id:'bob',t:'Resistencia de bobinados',f:[
+  ['bob_u','Fase U (U1–U2)','num',{u:'Ω',only:['tri']}],['bob_v','Fase V (V1–V2)','num',{u:'Ω',only:['tri']}],['bob_w','Fase W (W1–W2)','num',{u:'Ω',only:['tri']}],
+  ['bob_uv','Bobina principal','num',{u:'Ω',only:['mono']}],['bob_vw','Bobina auxiliar','num',{u:'Ω',only:['mono']}],
+  ['bob_uv','U–V (registro anterior)','num',{u:'Ω',only:['tri'],legacy:1}],['bob_vw','V–W (registro anterior)','num',{u:'Ω',only:['tri'],legacy:1}],['bob_wu','W–U (registro anterior)','num',{u:'Ω',only:['tri'],legacy:1}],['bob_ind','Inducido','num',{u:'Ω',only:['cc']}],['bob_campo','Campo','num',{u:'Ω',only:['cc']}]]},
+ {id:'vac',t:'Prueba en vacío',f:[
+  ['vac_v','Tensión','num',{u:'V'}],['vac_f','Frecuencia','num',{u:'Hz'}],['vac_rpm','Velocidad','num',{u:'rpm'}],
+  ['vac_iu','Corriente U','num',{u:'A'}],['vac_iv','Corriente V','num',{u:'A'}],['vac_iw','Corriente W','num',{u:'A'}]]},
+ {id:'car',t:'Prueba en carga',f:[
+  ['car_v','Tensión','num',{u:'V'}],['car_f','Frecuencia','num',{u:'Hz'}],['car_rpm','Velocidad','num',{u:'rpm'}],
+  ['car_iu','Corriente U','num',{u:'A'}],['car_iv','Corriente V','num',{u:'A'}],['car_iw','Corriente W','num',{u:'A'}]]},
+ {id:'vib',t:'Vibraciones (mm/s RMS)',f:[
+  ['vib_clase','Clase ISO 10816-1','select',{opts:{I:'I · hasta 15 kW',II:'II · 15 a 75 kW',III:'III · grande, base rígida',IV:'IV · grande, base flexible'}}],
+  ['vib_lah','LA horizontal','num',{u:'mm/s'}],['vib_lav','LA vertical','num',{u:'mm/s'}],['vib_laa','LA axial','num',{u:'mm/s'}],
+  ['vib_loah','LOA horizontal','num',{u:'mm/s'}],['vib_loav','LOA vertical','num',{u:'mm/s'}],['vib_loaa','LOA axial','num',{u:'mm/s'}]]},
+ {id:'tem',t:'Temperaturas',f:[
+  ['tem_carc','Carcasa','num',{u:'°C'}],
+  ['tem_la','Rodamiento LA','num',{u:'°C'}],['tem_loa','Rodamiento LOA','num',{u:'°C'}],['tem_min','Duración de marcha','num',{u:'min'}]]}
+];
+const tk=t=>t==='mono'?'mono':t==='cc'?'cc':'tri';
+function fieldsFor(sec,tipo){const k=tk(tipo);return sec.f.filter(f=>{const op=f[3]||{};return !(op.not&&op.not.includes(k))&&!(op.only&&!op.only.includes(k))})
+  .map(f=>{const l=f[3]?.lab?.[k];return l?[f[0],l,f[2],f[3]]:f})}
+const PRUEBA_FIN=[
+ ['resultado','Resultado','select',{opts:o(['Aprobado','Observado','Rechazado']),req:1}],
+ ['obs','Observaciones','area',{wide:1}]
+];
+const MANT=[
+ ['fecha','Fecha','date',{req:1}],
+ ['tipo','Tipo de trabajo','select',{opts:o(['Preventivo','Correctivo','Predictivo','Lubricación','Cambio de rodamientos','Rebobinado','Limpieza y secado','Balanceo','Alineación']),req:1}],
+ ['ot','Orden de trabajo','text',{ph:'OT-2026-118'}],
+ ['descripcion','Trabajo realizado','area',{wide:1,req:1}],
+ ['repuestos','Repuestos utilizados','area',{wide:1,ph:'2× 6309-2Z-C3, retén 45×62×8'}],
+ ['horas','Horas hombre','num',{u:'h'}],['horometro','Horómetro motor','num',{u:'h'}],
+ ['estadoFinal','Estado final','select',{opts:o(['Operativo','Operativo con observaciones','Fuera de servicio'])}],
+ ['proxima','Próximo mantenimiento','date']
+];
+
+/* ---------- utilidades ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num=x=>{if(x==null||x==='')return null;const v=parseFloat(String(x).replace(/\s/g,'').replace(',','.'));return isFinite(v)?v:null};
+const fx=(v,d=2)=>v.toLocaleString('es-AR',{maximumFractionDigits:d});
+const today=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)};
+const fdate=s=>{if(!s)return '';const[y,m,d]=s.split('-');return `${d}/${m}/${y}`};
+const daysTo=s=>s?Math.round((new Date(s+'T12:00')-new Date(today()+'T12:00'))/864e5):null;
+const allFields=secs=>secs.flatMap(s=>s.f);
+function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2600)}
+function svg(p){return `<svg viewBox="0 0 24 24">${p}</svg>`}
+
+/* ---------- estado ---------- */
+const S={downloads:true,assets:true,canWrite:true,motors:[],regs:[],items:{},fotosRec:{},cursor:null,fileToken:null,fileTokenAt:0,loaded:false,
+  view:'list',motorId:null,editId:null,tab:'placa',q:'',pruebas:[],mants:[],subUnsubs:[],names:{}};
+
+/* ---------- cálculos ---------- */
+function calcPrueba(p,tipo){
+  const out={};const add=(s,label,val,state,note)=>(out[s]=out[s]||[]).push({label,val,state,note});
+  const ar=aisRows(p);
+  const worst=(k)=>ar.filter(r=>r[k]!=null).reduce((a,b)=>!a||b[k]<a[k]?b:a,null);
+  let w=worst('r1');if(w)add('ais','R 1 min más baja · '+w.pl,fmtR(w.r1)+' MΩ',w.r1<5?'mal':'ok','Referencia IEEE 43: mín. 5 MΩ bobinado aleatorio < 1 kV · 100 MΩ preformado');
+  w=worst('dar');if(w)add('ais','DAR más bajo · '+w.pl,fx(w.dar),stDar(w.dar),'DAR = R 1 min / R 30 s · aceptable desde 1,25');
+  w=worst('ip');if(w)add('ais','IP más bajo · '+w.pl,fx(w.ip),w.r1>5000?null:stIp(w.ip),'IP = R 10 min / R 1 min · IEEE 43: mínimo 2,0'+(w.r1>5000?' · con R 1 min > 5000 MΩ el IP no es indicativo':''));
+  const lst=(ks)=>ks.map(k=>num(p[k])).filter(v=>v!=null);
+  const unb=v=>{const a=v.reduce((x,y)=>x+y,0)/v.length;return{a,u:a?Math.max(...v.map(x=>Math.abs(x-a)))/a*100:0}};
+  const kt=tk(tipo),tb=num(p.amb_t??p.bob_temp),r25=v=>v*259.5/(234.5+tb);
+  if(kt!=='tri'){const ws=kt==='mono'?[['bob_uv','Bobina principal'],['bob_vw','Bobina auxiliar']]:[['bob_ind','Inducido'],['bob_campo','Campo']];
+    if(tb!=null)ws.forEach(([key,l])=>{const v=num(p[key]);if(v!=null)add('bob','R '+l.toLowerCase()+' a 25 °C',fx(r25(v),4)+' Ω',null,'R25 = Rt × 259,5 / (234,5 + t) · t = temperatura ambiente')});
+    if(kt==='mono'){const a=num(p.bob_uv),b=num(p.bob_vw);if(a!=null&&b!=null&&a>0)add('bob','Relación auxiliar / principal',fx(b/a),null,'Normalmente la bobina auxiliar tiene mayor resistencia que la principal')}}
+  let rb=kt==='tri'?lst(['bob_u','bob_v','bob_w']):[];if(kt==='tri'&&rb.length<2)rb=lst(['bob_uv','bob_vw','bob_wu']);
+  if(rb.length>=2){const{a,u}=unb(rb);add('bob','Desequilibrio entre fases',fx(u,1)+' %',u<=2?'ok':u<=5?'obs':'mal','Máx. desvío respecto al promedio · referencia ≤ 2 %');
+    const tb=num(p.amb_t??p.bob_temp);if(tb!=null)add('bob','Promedio corregido a 25 °C (cobre)',fx(a*(234.5+25)/(234.5+tb),4)+' Ω',null,'R25 = Rt × 259,5 / (234,5 + t) · t = temperatura ambiente')}
+  for(const[s,pre]of[['vac','vac'],['car','car']]){const iv=lst([pre+'_iu',pre+'_iv',pre+'_iw']);
+    if(iv.length>=2){const{a,u}=unb(iv);add(s,'Corriente promedio',fx(a)+' A',null);add(s,'Desequilibrio de corriente',fx(u,1)+' %',u<=5?'ok':u<=10?'obs':'mal','Referencia ≤ 5 %')}
+    const V=num(p[pre+'_v']),fp=kt==='cc'?1:num(p[pre+'_fp']);
+    if(V!=null&&fp!=null&&iv.length){const ia=iv.reduce((x,y)=>x+y,0)/iv.length,w=(kt==='tri'?Math.sqrt(3):1)*V*ia*fp;
+      add(s,'Potencia absorbida (calculada)',s==='car'?fx(w/1000,2)+' kW':fx(w,0)+' W',null,(kt==='tri'?'P = √3 × V × I prom × cos φ':kt==='mono'?'P = V × I × cos φ':'P = V × I')+(s==='vac'&&kt!=='cc'?' · en vacío usá el cos φ medido, no el de placa':''))}}
+  const vv=lst(['vib_lah','vib_lav','vib_laa','vib_loah','vib_loav','vib_loaa']);
+  if(vv.length){const L={I:[.71,1.8,4.5],II:[1.12,2.8,7.1],III:[1.8,4.5,11.2],IV:[2.8,7.1,18]}[p.vib_clase||'I'];const m=Math.max(...vv);
+    const z=m<=L[0]?'A':m<=L[1]?'B':m<=L[2]?'C':'D';
+    add('vib','Máximo medido · zona '+z,fx(m)+' mm/s',z==='D'?'mal':z==='C'?'obs':'ok',`Clase ${p.vib_clase||'I'}: A ≤ ${fx(L[0])} · B ≤ ${fx(L[1])} · C ≤ ${fx(L[2])} mm/s`)}
+  const ta=num(ambT(p)),tc=num(p.tem_carc),tr=lst(['tem_la','tem_loa']);
+  if(tr.length){const m=Math.max(...tr);add('tem','Rodamiento más caliente',fx(m,1)+' °C',m<=80?'ok':m<=95?'obs':'mal','Referencia: ≤ 80 °C normal, > 95 °C revisar')}
+  if(ta!=null&&tc!=null)add('tem','Elevación de carcasa',fx(tc-ta,1)+' K',null);
+  return out;
+}
+function fmtR(v){return fx(v,v<10?2:v<100?1:0)}
+const stIp=v=>v<1?'mal':v<2?'obs':'ok',stDar=v=>v<1?'mal':v<1.25?'obs':'ok';
+function aisRows(p,all){return AIS_P.map(([q,pl])=>{const r30=num(p[`ais_${q}_30`]),r1=num(p[`ais_${q}_1`]),r10=num(p[`ais_${q}_10`]);
+  return{q,pl,r30,r1,r10,dar:r1!=null&&r30>0?r1/r30:null,ip:r10!=null&&r1>0?r10/r1:null}}).filter(r=>all||r.r30!=null||r.r1!=null||r.r10!=null)}
+function idxCell(v,st,attr=''){return `<td class="ix ${v==null?'':st}" ${attr}>${v==null?'—':fx(v)}</td>`}
+const AIS_HEAD='<thead><tr><th>Medición</th><th>30 s</th><th>1 min</th><th>10 min</th><th>DAR</th><th>IP</th></tr></thead>';
+function aisTableHTML(p){const rows=aisRows(p);if(!rows.length)return '<p class="none">Sin valores cargados.</p>';
+  const c=v=>v==null?'—':fmtR(v);
+  return `<div class="tblwrap"><table class="aist">${AIS_HEAD}<tbody>${rows.map(r=>`<tr><th>${esc(r.pl)}</th><td>${c(r.r30)}</td><td>${c(r.r1)}</td><td>${c(r.r10)}</td>${idxCell(r.dar,stDar(r.dar??0))}${idxCell(r.ip,r.r1>5000?'':stIp(r.ip??0))}</tr>`).join('')}</tbody></table></div>
+   <p class="tiny">Valores en MΩ${p.ais_v?` · tensión de prueba ${esc(p.ais_v)} V`:''}</p>`}
+function aisForm(d){const inp=(q,t)=>{const k=`ais_${q}_${t}`;return `<td><input id="f_${k}" name="${k}" type="text" inputmode="decimal" value="${esc(d[k]??'')}" aria-label="${esc(AIS_P.find(x=>x[0]===q)[1])} a ${esc(AIS_T.find(x=>x[0]===t)[1])}" autocomplete="off"></td>`};
+  return `<div class="grid">${inputHTML(PRUEBA[0].f[0],d)}</div>
+   <div class="tblwrap" style="margin-top:10px"><table class="aist edit">${AIS_HEAD}<tbody>${AIS_P.map(([q,pl])=>`<tr><th>${esc(pl)}</th>${AIS_T.map(([t])=>inp(q,t)).join('')}<td class="ix" data-dar="${q}">—</td><td class="ix" data-ip="${q}">—</td></tr>`).join('')}</tbody></table></div>
+   <p class="tiny">Valores en MΩ. Cargá solo la lectura de 1 min para una medición puntual, o las tres para obtener DAR e IP.</p>`}
+function calcHTML(rows){return rows&&rows.length?`<div class="calc">${rows.map(r=>`<div class="calc-row ${r.state||''}"><span>${esc(r.label)}</span><span class="v">${esc(r.val)}</span>${r.note?`<span class="note">${esc(r.note)}</span>`:''}</div>`).join('')}</div>`:''}
+const RES_CLS={Aprobado:'ok',Observado:'obs',Rechazado:'mal'};
+
+/* ---------- servidor ---------- */
+const API={token:null,user:null};
+try{API.token=localStorage.getItem('fm_token');API.user=JSON.parse(localStorage.getItem('fm_user')||'null')}catch{}
+function guardarSesion(){try{if(API.token){localStorage.setItem('fm_token',API.token);localStorage.setItem('fm_user',JSON.stringify(API.user))}else{localStorage.removeItem('fm_token');localStorage.removeItem('fm_user')}}catch{}}
+async function pb(method,path,body,isForm){
+  const h={};if(API.token)h.Authorization=API.token;let b=body;
+  if(body&&!isForm){h['Content-Type']='application/json';b=JSON.stringify(body)}
+  let r;try{r=await fetch(path,{method,headers:h,body:b})}catch(e){throw{code:0,message:'No se pudo conectar con el servidor. Revisá que la PC del taller esté encendida.'}}
+  const t=await r.text();let j={};try{j=t?JSON.parse(t):{}}catch{}
+  if(!r.ok)throw{code:r.status,message:j.message||('Error del servidor ('+r.status+')'),data:j.data};
+  return j;
+}
+const qs=o=>Object.entries(o).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
+const q=v=>"'"+String(v).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+"'";
+function newId(){const a=new Uint8Array(10);crypto.getRandomValues(a);return [...a].map(x=>x.toString(16).padStart(2,'0')).join('')}
+const stampOf=iso=>{const t=Date.parse(iso||'');return isFinite(t)?t:0};
+const nombreTecnico=()=>API.user?.name||API.user?.email||'';
+
+async function login(email,pass){
+  try{const r=await pb('POST','/api/collections/users/auth-with-password',{identity:email,password:pass});
+    API.token=r.token;API.user={id:r.record.id,email:r.record.email,name:r.record.name||''};guardarSesion();}
+  catch(e){throw e.code===400?{message:'Usuario o contraseña incorrectos.'}:e}
+}
+async function refreshAuth(){
+  const r=await pb('POST','/api/collections/users/auth-refresh',{});
+  API.token=r.token;API.user={id:r.record.id,email:r.record.email,name:r.record.name||''};guardarSesion();
+}
+function logout(){API.token=null;API.user=null;guardarSesion();Object.assign(S,{motors:[],regs:[],items:{},fotosRec:{},cursor:null,loaded:false,view:'list'});renderLogin()}
+
+/* Trae todo lo que cambió desde la última vez y rearma motores y registros. */
+async function cargar(){
+  let page=1;
+  while(true){
+    const p={page,perPage:500,sort:'updated,id',skipTotal:1};if(S.cursor)p.filter=`updated >= ${q(S.cursor)}`;
+    const r=await pb('GET','/api/collections/items/records?'+qs(p));
+    for(const it of r.items){S.items[it.uid]=it;if(!S.cursor||it.updated>S.cursor)S.cursor=it.updated}
+    if(r.items.length<500)break;page++;
+  }
+  const fr=await pb('GET','/api/collections/fotos/records?'+qs({perPage:500,skipTotal:1,sort:'-created'}));
+  for(const f of fr.items)S.fotosRec[f.nombre]=f;
+  rearmar();S.loaded=true;
+}
+function rearmar(){
+  const motors=[],regs=[];
+  for(const it of Object.values(S.items)){
+    if(it.borrado||!it.datos)continue;
+    if(it.tipo==='motor'){const m=it.datos;motors.push({id:it.uid,d:m.d||{},fotos:m.fotos||[],creado:m.creado,act:m.act})}
+    else regs.push({...it.datos,id:it.uid});
+  }
+  for(const m of motors){
+    const mine=regs.filter(r=>r.motorId===m.id);
+    const lp=mine.filter(r=>r.kind==='prueba').sort((a,b)=>(b.v?.fecha||'').localeCompare(a.v?.fecha||''))[0];
+    const lm=mine.filter(r=>r.kind==='mant').sort((a,b)=>(b.v?.fecha||'').localeCompare(a.v?.fecha||''))[0];
+    m.resumen={ultPrueba:lp?{fecha:lp.v.fecha,resultado:lp.v.resultado||''}:null,ultMant:lm?{fecha:lm.v.fecha,tipo:lm.v.tipo}:null,proxMant:lm?.v?.proxima||null};
+  }
+  S.motors=motors;S.regs=regs;derivar();
+}
+/* Pruebas y mantenimientos del motor abierto, con la forma que usan las pantallas. */
+function derivar(){
+  const of=k=>S.regs.filter(r=>r.motorId===S.motorId&&r.kind===k).map(r=>({...r.v,id:r.id,secciones:r.secciones||[],por:r.tecnico||'',_r:r}))
+    .sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+  S.pruebas=of('prueba');S.mants=of('mant');
+}
+/* Guarda un motor o registro. No pisa una versión más nueva de otro técnico. */
+async function putItem(uid,tipo,motorUid,datos,actualizado,borrado=false){
+  const r=await pb('GET','/api/collections/items/records?'+qs({perPage:1,skipTotal:1,filter:`uid = ${q(uid)}`}));
+  const cur=r.items[0],known=S.items[uid];
+  if(cur&&(cur.actualizado>actualizado||(known&&cur.actualizado>known.actualizado))){
+    await cargar();throw{message:'Otro técnico modificó este registro hace un momento. Se trajeron los cambios: revisalo y volvé a guardar.'}
+  }
+  const body={uid,tipo,motor_uid:motorUid||'',datos:datos??null,actualizado,borrado};
+  const rec=cur?await pb('PATCH','/api/collections/items/records/'+cur.id,body):await pb('POST','/api/collections/items/records',body);
+  S.items[uid]=rec;rearmar();
+}
+async function guardarMotor(m){const act=new Date().toISOString();const datos={id:m.id,d:m.d,fotos:m.fotos||[],creado:m.creado||act,act};
+  await putItem(m.id,'motor',null,datos,stampOf(act))}
+async function borrar(uid,tipo,motorUid){await putItem(uid,tipo,motorUid,null,Date.now(),true)}
+
+/* Fotos: las descargas piden un permiso temporal del servidor. */
+async function fileToken(){if(!S.fileToken||Date.now()-S.fileTokenAt>60000){S.fileToken=(await pb('POST','/api/files/token',{})).token;S.fileTokenAt=Date.now()}return S.fileToken}
+function fotoURL(nombre){const f=S.fotosRec[nombre];return f&&S.fileToken?`/api/files/fotos/${f.id}/${encodeURIComponent(f.archivo)}?token=${S.fileToken}`:null}
+
+/* ---------- inicio ---------- */
+function renderLogin(err,email){
+  setHeader('Fichero de Motores','Registro técnico del taller',false);
+  ['#fab','#exportBtn','#logoutBtn','#refreshBtn'].forEach(x=>$(x).hidden=true);
+  $('#app').innerHTML=`<div class="login"><form class="sec" id="lg" novalidate><h2>Iniciar sesión</h2>
+    <p class="muted" style="margin:0">Entrá con el mismo usuario y contraseña que usás en la app del celular.</p>
+    <div class="fld"><label for="lg_e">Usuario (email)</label><div class="inwrap"><input id="lg_e" type="email" autocomplete="username" required></div></div>
+    <div class="fld"><label for="lg_p">Contraseña</label><div class="inwrap"><input id="lg_p" type="password" autocomplete="current-password" required></div></div>
+    ${err?`<p class="err">${esc(err)}</p>`:''}
+    <button class="btn primary" id="lg_b" type="submit">Entrar</button></form></div>`;
+  $('#lg_e').value=email||API.user?.email||'';($('#lg_e').value?$('#lg_p'):$('#lg_e')).focus();
+  $('#lg').onsubmit=async e=>{e.preventDefault();const b=$('#lg_b');b.disabled=true;b.textContent='Entrando…';
+    const em=$('#lg_e').value.trim();try{await login(em,$('#lg_p').value);await arrancar()}catch(x){renderLogin(x.message,em)}};
+}
+async function arrancar(){
+  $('#app').innerHTML='<div class="empty"><h2>Cargando fichero…</h2><p>Trayendo motores, pruebas y mantenimientos.</p></div>';
+  try{await cargar();await fileToken().catch(()=>{})}
+  catch(e){if(e.code===401||e.code===403){logout();return}$('#app').innerHTML=`<div class="empty"><h2>Sin conexión</h2><p>${esc(e.message)}</p></div>`;return}
+  $('#logoutBtn').hidden=false;$('#refreshBtn').hidden=false;render();
+}
+(async()=>{
+  if(!API.token){renderLogin();return}
+  try{await refreshAuth()}catch(e){if(e.code===0){$('#app').innerHTML=`<div class="empty"><h2>Sin conexión</h2><p>${esc(e.message)}</p></div>`;return}logout();return}
+  await arrancar();
+})();
+async function actualizar(manual){
+  if(!API.token||!S.loaded)return;
+  try{await cargar();if(S.view==='motor')await fileToken().catch(()=>{});if(S.view==='list'||S.view==='motor')render();if(manual)toast('Datos actualizados')}
+  catch(e){if(manual)toast(e.message)}
+}
+setInterval(()=>{if(document.visibilityState==='visible')actualizar(false)},20000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')actualizar(false)});
+$('#refreshBtn').onclick=()=>actualizar(true);
+$('#logoutBtn').onclick=()=>confirmSheet('Cerrar sesión','Vas a tener que volver a escribir tu usuario y contraseña.','Cerrar sesión',async()=>logout());
+const who=n=>n||'';
+
+/* ---------- navegación ---------- */
+function go(view,extra={}){
+  Object.assign(S,{view},extra);derivar();
+  render();window.scrollTo(0,0);
+  if(view==='motor'&&S.tab==='fotos')fileToken().then(()=>{if(S.view==='motor')render()}).catch(()=>{});
+}
+$('#back').onclick=()=>{if(S.view==='motor')go('list');else if(S.view==='motorForm'&&!S.editId)go('list');else go('motor')};
+$('#fab').onclick=()=>{
+  if(S.view==='list')go('motorForm',{editId:null});
+  else if(S.view==='motor'){if(S.tab==='mant')go('mantForm',{editId:null});else if(S.tab==='fotos')$('#photoIn')?.click();else go('pruebaForm',{editId:null})}
+};
+$('#exportBtn').onclick=()=>S.view==='motor'?motorExportSheet():listExportSheet();
+
+/* ---------- render ---------- */
+function setHeader(title,sub,back){
+  $('#ttl').innerHTML=`${esc(title)}<small id="sub">${esc(sub)}</small>`;$('#back').hidden=!back;
+  document.title=back?`${title} · Fichero de Motores`:'Fichero de Motores';
+}
+function render(){
+  const v=S.view,fab=$('#fab'),ft=$('#fabTxt');
+  $('#exportBtn').hidden=!S.downloads||!(v==='list'||v==='motor');
+  fab.hidden=!S.canWrite||!(v==='list'||v==='motor');
+  if(v==='list'){ft.textContent='Nuevo motor';return renderList()}
+  const m=S.motors.find(x=>x.id===S.motorId);
+  if(v==='motor'){if(!m){$('#app').innerHTML='<div class="empty"><p>Este motor ya no está en el fichero.</p></div>';return}ft.textContent=S.tab==='mant'?'Registrar mantenimiento':S.tab==='fotos'?'Agregar foto':'Registrar prueba';return renderMotor(m)}
+  if(v==='motorForm')return renderMotorForm(S.editId?m:null);
+  if(v==='pruebaForm')return renderRecForm('prueba',m);
+  if(v==='mantForm')return renderRecForm('mant',m);
+}
+
+function motorSpec(d){
+  return [d.marca,d.pot&&`${d.pot} ${d.potU||'kW'}`,d.rpm&&`${d.rpm} rpm`,d.tension&&`${d.tension} V`,d.carcasa,d.redI&&`i = ${d.redI}`,d.redRpm&&`salida ${d.redRpm} rpm`].filter(Boolean).join(' · ')||'Sin datos de placa';
+}
+function mantBadge(m){const p=m.resumen?.proxMant;if(!p)return '';const d=daysTo(p);
+  return d<0?`<span class="badge mal">Mant. vencido ${fdate(p)}</span>`:d<=15?`<span class="badge obs">Mant. ${fdate(p)}</span>`:`<span class="badge info">Próx. mant. ${fdate(p)}</span>`}
+
+/* ---------- filtros ---------- */
+const ADV_DEF={potMin:'',potMax:'',polos:'',tipo:'',estado:'',marca:'',carcasa:'',tension:'',rod:'',lugar:'',brida:'',prueba:'',mant:''};
+S.adv={...ADV_DEF};S.showAdv=false;
+const potKW=d=>{const p=num(d.pot);if(p==null)return null;return p*(d.potU==='HP'?0.7457:d.potU==='CV'?0.7355:1)};
+const has=(v,q)=>String(v||'').toLowerCase().includes(q.toLowerCase());
+function matches(m){
+  const d=m.d||{},a=S.adv,r=m.resumen||{};
+  const k=potKW(d),mn=num(a.potMin),mx=num(a.potMax);
+  if(mn!=null&&(k==null||k<mn-1e-6))return false;
+  if(mx!=null&&(k==null||k>mx+1e-6))return false;
+  if(a.polos&&d.polos!==a.polos)return false;
+  if(a.tipo&&d.tipo!==a.tipo)return false;
+  if(a.estado&&d.estado!==a.estado)return false;
+  if(a.marca&&!has(d.marca,a.marca))return false;
+  if(a.carcasa&&!has(d.carcasa,a.carcasa))return false;
+  if(a.tension&&!has(d.tension,a.tension))return false;
+  if(a.rod&&!(has(d.rodLA,a.rod)||has(d.rodLOA,a.rod)))return false;
+  if(a.lugar&&!(has(d.cliente,a.lugar)||has(d.ubicacion,a.lugar)||has(d.equipo,a.lugar)))return false;
+  if(a.brida&&d.brida!==a.brida)return false;
+  if(a.prueba){if(a.prueba==='none'){if(r.ultPrueba)return false}else if(r.ultPrueba?.resultado!==a.prueba)return false}
+  if(a.mant){const x=daysTo(r.proxMant);
+    if(a.mant==='venc'&&!(x!=null&&x<0))return false;
+    if(a.mant==='30'&&!(x!=null&&x>=0&&x<=30))return false;
+    if(a.mant==='none'&&r.proxMant)return false}
+  const q=S.q.trim().toLowerCase();
+  if(q&&![d.codigo,d.marca,d.modelo,d.serie,d.cliente,d.ubicacion,d.equipo,d.rodLA,d.rodLOA,d.carcasa].join(' ').toLowerCase().includes(q))return false;
+  return true;
+}
+function filtered(){return S.motors.filter(matches).sort((a,b)=>(a.d?.codigo||'').localeCompare(b.d?.codigo||'','es',{numeric:true}))}
+const ADV_LABEL={potMin:'Potencia ≥',potMax:'Potencia ≤',polos:'Polos',tipo:'Tipo',estado:'Estado',marca:'Marca',carcasa:'Carcasa',tension:'Tensión',rod:'Rodamiento',lugar:'Cliente/ubicación',brida:'Brida',prueba:'Última prueba',mant:'Mantenimiento'};
+const PRUEBA_F={Aprobado:'Aprobado',Observado:'Observado',Rechazado:'Rechazado',none:'Sin pruebas'};
+const MANT_F={venc:'Vencido','30':'Vence en 30 días',none:'Sin programar'};
+function advText(k,v){if(k==='potMin'||k==='potMax')return `${ADV_LABEL[k]} ${v} kW`;
+  const map={tipo:TIPOS,estado:ESTADOS,prueba:PRUEBA_F,mant:MANT_F}[k];return `${ADV_LABEL[k]}: ${map?map[v]:v}`}
+const activeAdv=()=>Object.entries(S.adv).filter(([,v])=>v!=='');
+
+function renderList(){
+  setHeader('Fichero de Motores','Registro técnico del taller'+(nombreTecnico()?' · '+nombreTecnico():''),false);
+  if(!S.loaded)return;
+  const sel=(id,l,opts)=>`<div class="fld"><label for="${id}">${l}</label><div class="inwrap"><select id="${id}" data-adv="${id.slice(2)}"><option value="">Todos</option>${Object.entries(opts).map(([k,v])=>`<option value="${esc(k)}" ${S.adv[id.slice(2)]===k?'selected':''}>${esc(v)}</option>`).join('')}</select></div></div>`;
+  const txt=(id,l,ph,u)=>`<div class="fld"><label for="${id}">${l}</label><div class="inwrap"><input id="${id}" data-adv="${id.slice(2)}" type="text" ${u?'inputmode="decimal"':''} value="${esc(S.adv[id.slice(2)])}" placeholder="${esc(ph)}" autocomplete="off">${u?`<span class="u">${u}</span>`:''}</div></div>`;
+  const bridas=MOTOR.find(s=>s.id==='brida').f.find(f=>f[0]==='brida')[3].opts;
+  $('#app').innerHTML=`
+   <div class="stats" id="stats"></div>
+   <div class="search"><input type="search" id="q" placeholder="Buscar por TAG, marca, serie, rodamiento…" value="${esc(S.q)}" aria-label="Buscar">
+    <button class="btn" id="advBtn" aria-expanded="${S.showAdv}">${svgI('<path d="M4 6h16M7 12h10M10 18h4"/>')}Filtros<span id="advN"></span></button></div>
+   <div class="sec advpanel" id="adv" ${S.showAdv?'':'hidden'}>
+    <div class="grid">
+     ${txt('a_potMin','Potencia desde','0,75','kW')}${txt('a_potMax','Potencia hasta','30','kW')}
+     ${sel('a_polos','Polos',o(['2','4','6','8','10','12']))}${sel('a_tipo','Tipo',TIPOS)}${sel('a_estado','Estado',ESTADOS)}
+     ${txt('a_marca','Marca','WEG')}${txt('a_carcasa','Carcasa','160M')}${txt('a_tension','Tensión','380')}
+     ${txt('a_rod','Rodamiento','6309')}${txt('a_lugar','Cliente / ubicación','Planta norte')}${sel('a_brida','Brida',bridas)}
+     ${sel('a_prueba','Última prueba',PRUEBA_F)}${sel('a_mant','Mantenimiento',MANT_F)}
+    </div>
+    <p class="muted" style="font-size:12px;margin:10px 0 0">Las potencias en HP o CV se convierten a kW para comparar.</p>
+    <div class="actions" style="margin-top:10px"><button class="btn small" id="advClear">Limpiar filtros</button></div>
+   </div>
+   <div class="pills" id="pills"></div>
+   <div class="resbar"><span id="rcount"></span><span class="spacer"></span>${S.downloads?`<button class="btn small" id="expList">${svgI('<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>')}Exportar listado</button>`:''}</div>
+   <div class="mlist" id="results"></div>`;
+  $('#q').oninput=e=>{S.q=e.target.value;updateList()};
+  $('#advBtn').onclick=()=>{S.showAdv=!S.showAdv;$('#adv').hidden=!S.showAdv;$('#advBtn').setAttribute('aria-expanded',S.showAdv)};
+  document.querySelectorAll('[data-adv]').forEach(el=>{el.addEventListener(el.tagName==='SELECT'?'change':'input',()=>{S.adv[el.dataset.adv]=el.value.trim();updateList()})});
+  $('#advClear').onclick=()=>{S.adv={...ADV_DEF};renderList()};
+  $('#expList')&&($('#expList').onclick=listExportSheet);
+  updateList();
+}
+function svgI(p){return `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">${p}</svg>`}
+function updateList(){
+  if(!$('#results'))return renderList();
+  const ms=S.motors,list=filtered();
+  const venc=ms.filter(m=>{const d=daysTo(m.resumen?.proxMant);return d!=null&&d<0}).length;
+  const taller=ms.filter(m=>m.d?.estado==='taller').length;
+  $('#stats').innerHTML=`<div class="stat"><b>${ms.length}</b><span>Motores</span></div><div class="stat"><b>${taller}</b><span>En taller</span></div><div class="stat ${venc?'alert':''}"><b>${venc}</b><span>Mant. vencido</span></div>`;
+  const act=activeAdv();
+  $('#advN').textContent=act.length?` · ${act.length}`:'';
+  $('#pills').innerHTML=act.map(([k,v])=>`<button class="chip" aria-pressed="true" data-rm="${k}" aria-label="Quitar filtro ${esc(advText(k,v))}">${esc(advText(k,v))} ✕</button>`).join('');
+  document.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{S.adv[b.dataset.rm]='';const el=$('#a_'+b.dataset.rm);if(el)el.value='';updateList()});
+  $('#rcount').textContent=ms.length?(list.length===ms.length?`${ms.length} motores`:`${list.length} de ${ms.length} motores`):'';
+  const eb=$('#expList');if(eb)eb.disabled=!list.length;
+  $('#results').innerHTML=ms.length===0?`<div class="empty"><h2>El fichero está vacío</h2><p>${S.canWrite?'Tocá <b>Nuevo motor</b> para cargar el primero con sus datos de placa, rodamientos y medidas.':'Todavía no hay motores cargados.'}</p></div>`:
+    list.length===0?`<div class="empty"><p>Ningún motor coincide con los filtros.</p></div>`:
+    list.map(m=>{const d=m.d||{};const up=m.resumen?.ultPrueba;
+     return `<button class="mcard" data-id="${esc(m.id)}"><span class="code">${esc(d.codigo||'(sin código)')}</span><span class="kind">${esc(TIPOS[d.tipo]||'')}</span>
+     <span class="spec">${esc(motorSpec(d))}${d.ubicacion||d.cliente?`<br>${esc([d.cliente,d.ubicacion].filter(Boolean).join(' — '))}`:''}</span>
+     <span class="badges">${d.estado?`<span class="badge ${d.estado==='taller'?'obs':d.estado==='baja'?'':'ok'}">${esc(ESTADOS[d.estado])}</span>`:''}
+     ${up?`<span class="badge ${RES_CLS[up.resultado]||''}">Prueba ${fdate(up.fecha)}: ${esc(up.resultado||'—')}</span>`:''}${mantBadge(m)}</span></button>`}).join('');
+  document.querySelectorAll('.mcard').forEach(c=>c.onclick=()=>go('motor',{motorId:c.dataset.id,tab:'placa'}));
+}
+
+function fieldVal(f,d){const[k,,type,op={}]=f;let v=d[k];if(v==null||v==='')return null;
+  if(type==='select'&&op.opts)v=op.opts[v]??v;if(type==='date')v=fdate(v);
+  if(k==='pot')return `${v} ${d.potU||'kW'}`;if(k==='potU')return null;
+  return op.u?`${v} ${op.u}`:v}
+function kvHTML(fields,d){const items=fields.map(f=>[f[1],fieldVal(f,d),f[2]]).filter(x=>x[1]!=null);
+  const short=items.filter(x=>x[2]!=='area'),long=items.filter(x=>x[2]==='area');
+  return (short.length?`<dl class="kv">${short.map(([l,v])=>`<div><dt>${esc(l)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>`:'')+
+   long.map(([l,v])=>`<div style="margin-top:10px"><div class="muted" style="font-size:12px">${esc(l)}</div><p style="margin:2px 0 0;white-space:pre-wrap">${esc(v)}</p></div>`).join('')}
+function secHTML(sec,d){const body=kvHTML(sec.f,d);return `<section class="sec"><h3>${esc(sec.t)}</h3>${body||'<p class="none">Sin datos cargados.</p>'}</section>`}
+
+function flangeSVG(d){
+  return `<svg viewBox="0 0 160 160" role="img" aria-label="Esquema de brida con cotas M, N y P">
+   <circle cx="80" cy="80" r="66" fill="var(--panel-2)" stroke="var(--muted)" stroke-width="2"/>
+   <circle cx="80" cy="80" r="50" fill="none" stroke="var(--accent)" stroke-width="1.2" stroke-dasharray="4 3"/>
+   <circle cx="80" cy="80" r="32" fill="var(--panel)" stroke="var(--ink)" stroke-width="2"/>
+   <circle cx="80" cy="80" r="11" fill="var(--muted)"/>
+   ${[45,135,225,315].map(a=>{const r=a*Math.PI/180;return `<circle cx="${80+50*Math.cos(r)}" cy="${80+50*Math.sin(r)}" r="5" fill="var(--panel)" stroke="var(--ink)" stroke-width="1.5"/>`}).join('')}
+   <text x="80" y="22" text-anchor="middle" font-size="11" font-family="JetBrains Mono,monospace" fill="var(--accent)">M ${esc(d.bM||'')}</text>
+   <text x="80" y="62" text-anchor="middle" font-size="11" font-family="JetBrains Mono,monospace" fill="var(--ink)">N ${esc(d.bN||'')}</text>
+   <text x="80" y="157" text-anchor="middle" font-size="11" font-family="JetBrains Mono,monospace" fill="var(--muted)">P ${esc(d.bP||'')}</text>
+  </svg>`}
+
+function renderMotor(m){
+  const d=m.d||{};setHeader(d.codigo||'Motor',[TIPOS[d.tipo],d.ubicacion].filter(Boolean).join(' · '),true);
+  const tabs=[['placa','Placa'],['mec','Mecánica'],['pruebas','Pruebas',S.pruebas.length],['mant','Mantenimiento',S.mants.length],['fotos','Fotos',(m.fotos||[]).length]];
+  let body='';
+  const sec=id=>MOTOR.find(s=>s.id===id);
+  if(S.tab==='placa'){
+    const pf=sec('placa').f.map(f=>[f[1],fieldVal(f,d)]).filter(x=>x[1]!=null);
+    const extra=MOTOR.filter(s=>s.when&&s.when(d));
+    body=`<div class="plate"><div class="plate-h"><b>${esc(d.marca||'Motor')}</b><span>${esc([d.modelo,d.serie&&('Nº '+d.serie)].filter(Boolean).join(' · '))}</span></div>
+     ${pf.length?`<dl class="plate-g">${pf.filter(x=>!['Marca','Modelo','Nº de serie'].includes(x[0])).map(([l,v])=>`<div><dt>${esc(l)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>`:'<p class="none" style="color:inherit">Sin datos de placa cargados.</p>'}</div>
+     ${extra.map(s=>secHTML(s,d)).join('')}${secHTML(sec('ident'),d)}${d.notas?secHTML(sec('notas'),d):''}`;
+  }else if(S.tab==='mec'){
+    const br=sec('brida');
+    body=`${secHTML(sec('rod'),d)}
+     <section class="sec"><h3>${br.t}</h3><div class="flange">${flangeSVG(d)}<div style="min-width:0">${kvHTML(br.f,d)||'<p class="none">Sin datos cargados.</p>'}</div></div></section>
+     ${secHTML(sec('eje'),d)}${secHTML(sec('aj'),d)}`;
+  }
+  else if(S.tab==='pruebas'){
+    body=S.pruebas.length?S.pruebas.map(p=>{const c=calcPrueba(p,d.tipo);const secs=PRUEBA.filter(s=>(p.secciones||[]).includes(s.id));
+      return `<article class="rec"><div class="rec-h"><span class="date">${fdate(p.fecha)}</span><span class="badge ${RES_CLS[p.resultado]||''}">${esc(p.resultado||'—')}</span>
+       ${p.motivo?`<span class="badge plain">${esc(p.motivo)}</span>`:''}<span class="spacer"></span><span class="who">${esc(who(p.por))}</span></div>
+       <div class="muted" style="font-size:13px">${esc(secs.map(s=>s.t).join(' · '))}</div>
+       ${ambT(p)!=null||p.amb_h!=null?`<div class="badges pills">${ambT(p)!=null?`<span class="badge plain">Ambiente ${esc(String(ambT(p)))} °C</span>`:''}${p.amb_h!=null?`<span class="badge plain">Humedad ${esc(String(p.amb_h))} % HR</span>`:''}</div>`:''}
+       ${secs.map(s=>s.id==='ais'?`<div class="subh">${esc(s.t)}</div>${aisTableHTML(p)}${calcHTML(c.ais)}`:c[s.id]?`<div class="subh">${esc(s.t)}</div>${calcHTML(c[s.id])}`:'').join('')}
+       ${p.obs?`<p>${esc(p.obs)}</p>`:''}
+       <details class="more"><summary>Ver valores medidos</summary>${secs.filter(s=>s.id!=='ais').map(s=>`<div class="subh">${esc(s.t)}</div>${kvHTML(fieldsFor(s,d.tipo),p)||'<p class="none">Sin valores.</p>'}`).join('')}
+        ${p.instrumento?`<p class="muted" style="margin-top:8px">Instrumentos: ${esc(p.instrumento)}</p>`:''}
+        ${S.canWrite?`<div class="actions" style="margin-top:10px"><button class="btn small" data-edit-p="${esc(p.id)}">Editar</button><button class="btn small danger" data-del-p="${esc(p.id)}">Eliminar</button></div>`:''}</details></article>`}).join('')
+     :`<div class="empty"><h2>Sin pruebas registradas</h2><p>Registrá megado, resistencia de bobinados, vacío, carga, vibraciones y temperaturas. Los índices se calculan solos.</p></div>`;
+  }else if(S.tab==='mant'){
+    body=S.mants.length?S.mants.map(x=>`<article class="rec"><div class="rec-h"><span class="date">${fdate(x.fecha)}</span><span class="badge info">${esc(x.tipo)}</span>
+      ${x.ot?`<span class="badge plain">${esc(x.ot)}</span>`:''}<span class="spacer"></span><span class="who">${esc(who(x.por))}</span></div>
+      <p>${esc(x.descripcion)}</p>${kvHTML(MANT.filter(f=>!['fecha','tipo','ot','descripcion'].includes(f[0])),x)}
+      ${S.canWrite?`<div class="actions"><button class="btn small" data-edit-m="${esc(x.id)}">Editar</button><button class="btn small danger" data-del-m="${esc(x.id)}">Eliminar</button></div>`:''}</article>`).join('')
+     :`<div class="empty"><h2>Sin mantenimientos</h2><p>Cargá lubricaciones, cambios de rodamientos, rebobinados y la fecha del próximo servicio.</p></div>`;
+  }else if(S.tab==='fotos'){
+    const fs=m.fotos||[];
+    body=`${S.assets&&S.canWrite?`<input type="file" id="photoIn" accept="image/*" hidden>`:''}
+     ${fs.length?`<div class="photos">${fs.map((f,i)=>{const u=fotoURL(f.file);return `<button class="photo" data-ph="${i}" aria-label="Ver foto ${i+1}">${u?`<img src="${esc(u)}" alt="${esc(f.nombre||'Foto del motor')}" loading="lazy">`:'<span class="nophoto">Todavía no se subió desde el celular</span>'}</button>`}).join('')}</div>`
+     :`<div class="empty"><h2>Sin fotos</h2><p>${S.assets&&S.canWrite?'Subí una foto de la placa, la brida o el bobinado y quedará guardada en la ficha.':'No hay fotos cargadas.'}</p></div>`}`;
+  }
+  $('#app').innerHTML=`<div class="headrow">${mantBadge(m)}${m.resumen?.ultPrueba?`<span class="badge ${RES_CLS[m.resumen.ultPrueba.resultado]||''}">Última prueba ${fdate(m.resumen.ultPrueba.fecha)}</span>`:''}
+    <span class="spacer"></span>${S.downloads?`<button class="btn small" id="expM">${svgI('<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>')}Exportar</button>`:''}${S.canWrite?`<button class="btn small" id="editM">Editar ficha</button><button class="btn small danger" id="delM">Eliminar</button>`:''}</div>
+   <div class="tabs" role="tablist">${tabs.map(([k,l,n])=>`<button class="tab" role="tab" data-t="${k}" aria-selected="${S.tab===k}">${l}${n!=null?`<span class="n">${n}</span>`:''}</button>`).join('')}</div>
+   ${body}`;
+  document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{S.tab=t.dataset.t;render();if(S.tab==='fotos')fileToken().then(()=>{if(S.view==='motor'&&S.tab==='fotos')render()}).catch(()=>{})});
+  $('#expM')&&($('#expM').onclick=motorExportSheet);
+  $('#editM')&&($('#editM').onclick=()=>go('motorForm',{editId:m.id}));
+  $('#delM')&&($('#delM').onclick=()=>confirmSheet('Eliminar motor',`Se borra la ficha de ${d.codigo||'este motor'} con sus pruebas y mantenimientos, para todo el equipo.`,'Eliminar',async()=>{for(const r of S.regs.filter(r=>r.motorId===m.id))await borrar(r.id,'registro',m.id);await borrar(m.id,'motor',null);go('list');toast('Motor eliminado')}));
+  document.querySelectorAll('[data-edit-p]').forEach(b=>b.onclick=()=>go('pruebaForm',{editId:b.dataset.editP}));
+  document.querySelectorAll('[data-edit-m]').forEach(b=>b.onclick=()=>go('mantForm',{editId:b.dataset.editM}));
+  document.querySelectorAll('[data-del-p]').forEach(b=>b.onclick=()=>confirmSheet('Eliminar prueba','El registro de esta prueba se borra para todo el equipo.','Eliminar',async()=>{await borrar(b.dataset.delP,'registro',m.id);derivar();render();toast('Prueba eliminada')}));
+  document.querySelectorAll('[data-del-m]').forEach(b=>b.onclick=()=>confirmSheet('Eliminar mantenimiento','El registro se borra para todo el equipo.','Eliminar',async()=>{await borrar(b.dataset.delM,'registro',m.id);derivar();render();toast('Mantenimiento eliminado')}));
+  const pi=$('#photoIn');if(pi)pi.onchange=()=>pi.files[0]&&uploadPhoto(m,pi.files[0]);
+  document.querySelectorAll('[data-ph]').forEach(b=>b.onclick=()=>viewPhoto(m,+b.dataset.ph));
+}
+
+/* ---------- formularios ---------- */
+function inputHTML(f,d,prefix=''){
+  const[k,l,type,op={}]=f;const v=d[k]??(type==='date'&&op.req?today():'');const id='f_'+prefix+k;
+  let ctl;
+  if(type==='select')ctl=`<select id="${id}" name="${k}" ${op.req?'required':''}><option value="">—</option>${Object.entries(op.opts).map(([ov,ol])=>`<option value="${esc(ov)}" ${String(v)===ov?'selected':''}>${esc(ol)}</option>`).join('')}</select>`;
+  else if(type==='area')ctl=`<textarea id="${id}" name="${k}" placeholder="${esc(op.ph||'')}" ${op.req?'required':''}>${esc(v)}</textarea>`;
+  else ctl=`<input id="${id}" name="${k}" ${type==='date'?'type="date"':type==='num'?'type="text" inputmode="decimal"':'type="text"'} value="${esc(v)}" placeholder="${esc(op.ph||'')}" ${op.req?'required':''} autocomplete="off">`;
+  return `<div class="fld ${op.wide||type==='area'?'wide':''}"><label for="${id}">${esc(l)}${op.req?' <span class="req">*</span>':''}</label><div class="inwrap">${ctl}${op.u&&type!=='select'?`<span class="u">${esc(op.u)}</span>`:''}</div></div>`;
+}
+function readForm(form){const d={};form.querySelectorAll('[name]').forEach(el=>{if(el.type==='checkbox')return;const v=el.value.trim();if(v!=='')d[el.name]=v});return d}
+function formShell(inner,saveTxt){return `<form id="frm" novalidate>${inner}<div class="actions"><button type="button" class="btn" id="cancel">Cancelar</button><button type="submit" class="btn primary" id="save">${saveTxt}</button></div></form>`}
+function validate(form){const bad=[...form.querySelectorAll('[required]')].find(el=>!el.value.trim());if(bad){bad.focus();toast('Completá: '+bad.closest('.fld').querySelector('label').textContent.replace('*','').trim());return false}return true}
+
+function renderMotorForm(m){
+  const d=m?.d||{};setHeader(m?'Editar ficha':'Nuevo motor',m?(d.codigo||''):'Datos de placa y medidas',true);
+  $('#app').innerHTML=formShell(MOTOR.map(s=>`<fieldset data-sec="${s.id}"><legend>${esc(s.t)}</legend><div class="grid">${s.f.map(f=>inputHTML(f,d)).join('')}</div></fieldset>`).join(''),m?'Guardar cambios':'Guardar motor');
+  const form=$('#frm');
+  const sync=()=>{const cur=readForm(form);MOTOR.forEach(s=>{if(s.when)form.querySelector(`[data-sec="${s.id}"]`).hidden=!s.when(cur)})};
+  form.querySelector('[name=tipo]').onchange=sync;sync();
+  $('#cancel').onclick=()=>m?go('motor'):go('list');
+  form.onsubmit=async e=>{e.preventDefault();if(!validate(form))return;
+    const nd=readForm(form);for(const s of MOTOR)if(s.when&&!s.when(nd))s.f.forEach(f=>delete nd[f[0]]);
+    const dup=S.motors.find(x=>x.id!==m?.id&&(x.d?.codigo||'').toLowerCase()===nd.codigo.toLowerCase());
+    if(dup){toast('Ya existe un motor con el código '+nd.codigo);form.querySelector('[name=codigo]').focus();return}
+    $('#save').disabled=true;
+    try{
+      if(m){await guardarMotor({id:m.id,d:nd,fotos:m.fotos,creado:m.creado});toast('Ficha actualizada');go('motor')}
+      else{const id=newId(),now=new Date().toISOString();await putItem(id,'motor',null,{id,d:nd,fotos:[],creado:now},stampOf(now));toast('Motor guardado');go('motor',{motorId:id,tab:'placa'})}
+    }catch(err){$('#save').disabled=false;toast(saveErr(err))}
+  };
+}
+function saveErr(e){if(e?.code===401||e?.code===403){setTimeout(logout,1500);return 'La sesión venció. Volvé a iniciar sesión.'}return e?.message||'No se pudo guardar. Revisá la conexión e intentá de nuevo.'}
+
+function renderRecForm(kind,m){
+  if(!m){go('list');return}
+  const isP=kind==='prueba',list=isP?S.pruebas:S.mants,rec=S.editId?list.find(x=>x.id===S.editId):null,d=rec||{};
+  setHeader(isP?(rec?'Editar prueba':'Nueva prueba'):(rec?'Editar mantenimiento':'Nuevo mantenimiento'),m.d?.codigo||'',true);
+  let inner;
+  if(isP){
+    const on=new Set(d.secciones||(m.d?.tipo==='cc'?['ais','bob']:['ais','bob','vac']));
+    inner=`<fieldset><legend>Datos generales</legend><div class="grid">${PRUEBA_GEN.map(f=>inputHTML(f,d)).join('')}</div></fieldset>
+     <fieldset><legend>Condiciones ambientales</legend><div class="grid">${PRUEBA_AMB.map(f=>inputHTML(f,{...d,amb_t:ambT(d)})).join('')}</div></fieldset>
+     <fieldset><legend>Ensayos realizados</legend><div class="checks">${PRUEBA.map(s=>`<label><input type="checkbox" id="chk_${s.id}" data-chk="${s.id}" ${on.has(s.id)?'checked':''}>${esc(s.t)}</label>`).join('')}</div></fieldset>
+     ${PRUEBA.map(s=>`<fieldset data-sec="${s.id}" ${on.has(s.id)?'':'hidden'}><legend>${esc(s.t)}</legend>${s.id==='ais'?aisForm(d):`<div class="grid">${fieldsFor(s,m.d?.tipo).filter(f=>!f[3]?.legacy).map(f=>inputHTML(f,d)).join('')}</div>`}<div class="live" data-live="${s.id}"></div></fieldset>`).join('')}
+     <fieldset><legend>Conclusión</legend><div class="grid">${PRUEBA_FIN.map(f=>inputHTML(f,d)).join('')}</div></fieldset>`;
+  }else inner=`<fieldset><legend>Mantenimiento</legend><div class="grid">${MANT.map(f=>inputHTML(f,d)).join('')}</div></fieldset>`;
+  $('#app').innerHTML=formShell(inner,'Guardar');
+  const form=$('#frm');
+  const live=()=>{if(!isP)return;const cur=readForm(form),c=calcPrueba(cur,m.d?.tipo);form.querySelectorAll('[data-live]').forEach(el=>el.innerHTML=calcHTML(c[el.dataset.live]));
+    for(const r of aisRows(cur,true)){const a=form.querySelector(`[data-dar="${r.q}"]`),b=form.querySelector(`[data-ip="${r.q}"]`);
+      a.textContent=r.dar==null?'—':fx(r.dar);a.className='ix '+(r.dar==null?'':stDar(r.dar));
+      b.textContent=r.ip==null?'—':fx(r.ip);b.className='ix '+(r.ip==null||r.r1>5000?'':stIp(r.ip))}};
+  if(isP){form.addEventListener('input',live);live();
+    form.querySelectorAll('[data-chk]').forEach(c=>c.onchange=()=>form.querySelector(`[data-sec="${c.dataset.chk}"]`).hidden=!c.checked)}
+  $('#cancel').onclick=()=>go('motor');
+  form.onsubmit=async e=>{e.preventDefault();if(!validate(form))return;
+    let nd=readForm(form);
+    if(isP){const secs=[...form.querySelectorAll('[data-chk]:checked')].map(c=>c.dataset.chk);
+      if(!secs.length){toast('Marcá al menos un ensayo');return}
+      for(const s of PRUEBA)if(!secs.includes(s.id))s.f.forEach(f=>delete nd[f[0]]);nd.secciones=secs}
+    const secs=nd.secciones||[];delete nd.secciones;
+    const id=rec?.id||newId(),now=new Date().toISOString(),old=rec?._r;
+    const datos={id,motorId:m.id,kind:isP?'prueba':'mant',v:nd,secciones:isP?secs:[],tecnico:old?.tecnico||nombreTecnico(),creado:old?.creado||now};
+    if(old)datos.act=now;
+    $('#save').disabled=true;
+    try{await putItem(id,'registro',m.id,datos,stampOf(now));
+      toast(isP?'Prueba guardada':'Mantenimiento guardado');
+      go('motor',{tab:isP?'pruebas':'mant'});
+    }catch(err){$('#save').disabled=false;toast(saveErr(err))}
+  };
+}
+/* ---------- fotos ---------- */
+async function shrink(file){
+  try{const bmp=await createImageBitmap(file);const k=Math.min(1,1600/Math.max(bmp.width,bmp.height));
+    const c=document.createElement('canvas');c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
+    return await new Promise(r=>c.toBlob(b=>r(b||file),'image/jpeg',.82));}catch{return file}
+}
+async function uploadPhoto(m,file){
+  toast('Subiendo foto…');
+  try{const blob=await shrink(file);const nombre=newId()+'.jpg';
+    const fd=new FormData();fd.append('nombre',nombre);fd.append('motor_uid',m.id);fd.append('archivo',blob,nombre);
+    const rec=await pb('POST','/api/collections/fotos/records',fd,true);S.fotosRec[nombre]=rec;
+    const cur=S.motors.find(x=>x.id===m.id);
+    await guardarMotor({...cur,fotos:[...(cur.fotos||[]),{file:nombre,nombre:'Foto',fecha:today()}]});
+    await fileToken().catch(()=>{});render();toast('Foto agregada')}
+  catch(e){toast(e?.message?('No se pudo subir la foto: '+e.message):'No se pudo subir la foto.')}
+}
+function viewPhoto(m,i){const f=(m.fotos||[])[i];if(!f)return;const u=fotoURL(f.file);
+  $('#layer').innerHTML=`<div class="viewer">${u?`<img src="${esc(u)}" alt="${esc(f.nombre||'Foto')}">`:'<p style="color:#fff">Esta foto todavía no se subió desde el celular.</p>'}<div class="actions">${S.canWrite?`<button class="btn danger" id="phDel">Quitar foto</button>`:''}<button class="btn primary" id="phClose">Cerrar</button></div></div>`;
+  $('#phClose').onclick=()=>$('#layer').innerHTML='';
+  $('#phDel')&&($('#phDel').onclick=async()=>{const cur=S.motors.find(x=>x.id===m.id);
+    try{await guardarMotor({...cur,fotos:(cur.fotos||[]).filter(x=>x.file!==f.file)});$('#layer').innerHTML='';render();toast('Foto quitada')}catch(e){toast(saveErr(e))}});
+}
+
+function confirmSheet(title,text,btn,fn){
+  $('#layer').innerHTML=`<div class="sheet-bg" id="sbg"><div class="sheet" role="dialog" aria-modal="true"><h2>${esc(title)}</h2><p>${esc(text)}</p><div class="actions"><button class="btn" id="sNo">Cancelar</button><button class="btn primary" id="sYes">${esc(btn)}</button></div></div></div>`;
+  const close=()=>$('#layer').innerHTML='';$('#sNo').onclick=close;$('#sbg').onclick=e=>{if(e.target.id==='sbg')close()};
+  $('#sYes').onclick=async()=>{$('#sYes').disabled=true;try{await fn()}catch(e){toast(saveErr(e))}close()};
+}
+
+/* ---------- exportar ---------- */
+const csvCell=v=>{v=String(v??'');return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+const csv=rows=>'﻿'+rows.map(r=>r.map(csvCell).join(';')).join('\r\n');
+async function save(filename,data){
+  const url=URL.createObjectURL(new Blob([data],{type:'text/csv;charset=utf-8'}));
+  const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),5000);toast('Descargado: '+filename);
+}
+function optionsSheet(title,text,opts){
+  $('#layer').innerHTML=`<div class="sheet-bg" id="sbg"><div class="sheet" role="dialog" aria-modal="true"><h2>${esc(title)}</h2><p>${esc(text)}</p>
+   <div class="opts">${opts.map((x,i)=>`<button class="opt" data-o="${i}"><b>${esc(x.label)}</b><span>${esc(x.desc)}</span></button>`).join('')}</div>
+   <div class="actions"><button class="btn" id="sNo">Cancelar</button></div></div></div>`;
+  const close=()=>$('#layer').innerHTML='';$('#sNo').onclick=close;$('#sbg').onclick=e=>{if(e.target.id==='sbg')close()};
+  document.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{close();opts[+b.dataset.o].fn()});
+}
+function listExportSheet(){
+  const n=filtered().length,act=activeAdv().length||S.q.trim();
+  optionsSheet('Exportar listado',`${n} ${n===1?'motor':'motores'}${act?' según los filtros aplicados':''}. Se descarga un CSV que abre en Excel.`,[
+    {label:'Resumen',desc:'Código, placa principal, rodamientos, brida, ubicación, última prueba y próximo mantenimiento',fn:()=>exportList('resumen')},
+    {label:'Todos los datos técnicos',desc:'Cada campo de la ficha en una columna',fn:()=>exportList('todo')}]);
+}
+function motorExportSheet(){
+  const m=S.motors.find(x=>x.id===S.motorId);if(!m)return;
+  optionsSheet('Exportar '+(m.d?.codigo||'motor'),'Se descarga un CSV que abre en Excel.',[
+    {label:'Ficha completa',desc:`Datos técnicos, ${S.pruebas.length} pruebas y ${S.mants.length} mantenimientos`,fn:()=>exportMotor('todo')},
+    {label:'Solo datos técnicos',desc:'Placa, rodamientos, brida, eje y medidas',fn:()=>exportMotor('tec')},
+    {label:'Solo historial',desc:'Pruebas con sus índices calculados y mantenimientos',fn:()=>exportMotor('hist')}]);
+}
+const optVal=(f,d)=>{const[k,,t,op={}]=f;const v=d[k];return t==='select'&&op.opts&&v?(op.opts[v]??v):v};
+function exportList(mode){
+  const list=filtered();
+  const head=[['LISTADO DE MOTORES',`Generado ${fdate(today())}`],['Filtros',[...activeAdv().map(([k,v])=>advText(k,v)),S.q.trim()&&`Búsqueda: ${S.q.trim()}`].filter(Boolean).join(' · ')||'Ninguno'],[]];
+  let rows;
+  if(mode==='resumen'){
+    const F=allFields(MOTOR),g=k=>F.find(f=>f[0]===k);
+    const cols=['codigo','tipo','estado','marca','modelo','serie','pot','potU','tension','corriente','rpm','polos','carcasa','rodLA','rodLOA','forma','brida','cliente','ubicacion','equipo'];
+    rows=[[...cols.map(k=>g(k)[1]),'Potencia (kW)','Última prueba','Resultado','Próximo mantenimiento']];
+    for(const m of list){const d=m.d||{},r=m.resumen||{},k=potKW(d);
+      rows.push([...cols.map(c=>optVal(g(c),d)),k!=null?fx(k,2):'',fdate(r.ultPrueba?.fecha),r.ultPrueba?.resultado,fdate(r.proxMant)])}
+  }else{
+    const fs=allFields(MOTOR);
+    rows=[[...fs.map(f=>f[1]+(f[3]?.u?` (${f[3].u})`:'')),'Potencia (kW)','Última prueba','Resultado','Último mantenimiento','Próximo mantenimiento']];
+    for(const m of list){const d=m.d||{},r=m.resumen||{},k=potKW(d);
+      rows.push([...fs.map(f=>optVal(f,d)),k!=null?fx(k,2):'',fdate(r.ultPrueba?.fecha),r.ultPrueba?.resultado,fdate(r.ultMant?.fecha),fdate(r.proxMant)])}
+  }
+  save(`motores-${mode}-${today()}.csv`,csv([...head,...rows]));
+}
+function exportMotor(mode='todo'){
+  const m=S.motors.find(x=>x.id===S.motorId);if(!m)return;const d=m.d||{};
+  const rows=[['FICHA DE MOTOR',d.codigo||''],['Generado',fdate(today())]];
+  if(mode!=='hist')for(const s of MOTOR){if(s.when&&!s.when(d))continue;const items=s.f.map(f=>[f[1],fieldVal(f,d)]).filter(x=>x[1]!=null);if(!items.length)continue;rows.push([],[s.t.toUpperCase()],...items)}
+  if(mode==='hist')rows.push(['Motor',motorSpec(d)]);
+  if(mode!=='tec'){
+    if(S.pruebas.length){rows.push([],['PRUEBAS']);for(const p of S.pruebas){const c=calcPrueba(p,d.tipo);rows.push([],['Fecha',fdate(p.fecha),'Motivo',p.motivo||'','Resultado',p.resultado||'','Técnico',who(p.por)]);
+      if(ambT(p)!=null||p.amb_h!=null){rows.push(['Condiciones ambientales']);if(ambT(p)!=null)rows.push(['','Temperatura ambiente',ambT(p)+' °C']);if(p.amb_h!=null)rows.push(['','Humedad ambiente',p.amb_h+' % HR'])}
+      for(const s of PRUEBA){if(!(p.secciones||[]).includes(s.id))continue;rows.push([s.t]);
+        if(s.id==='ais'){if(p.ais_v)rows.push(['','Tensión de prueba',p.ais_v+' V']);rows.push(['','Medición','30 s (MΩ)','1 min (MΩ)','10 min (MΩ)','DAR','IP']);
+          aisRows(p).forEach(r=>rows.push(['',r.pl,r.r30!=null?fmtR(r.r30):'',r.r1!=null?fmtR(r.r1):'',r.r10!=null?fmtR(r.r10):'',r.dar!=null?fx(r.dar):'',r.ip!=null?fx(r.ip):'']));
+          (c.ais||[]).forEach(r=>rows.push(['',r.label,r.val]));continue}
+        fieldsFor(s,d.tipo).forEach(f=>{const v=fieldVal(f,p);if(v!=null)rows.push(['',f[1],v])});(c[s.id]||[]).forEach(r=>rows.push(['',r.label,r.val]))}
+      if(p.instrumento)rows.push(['Instrumentos',p.instrumento]);if(p.obs)rows.push(['Observaciones',p.obs])}}
+    if(S.mants.length){rows.push([],['MANTENIMIENTOS'],['Fecha','Tipo','OT','Trabajo','Repuestos','Horas','Horómetro','Estado final','Próximo','Técnico']);
+      for(const x of S.mants)rows.push([fdate(x.fecha),x.tipo,x.ot,x.descripcion,x.repuestos,x.horas,x.horometro,x.estadoFinal,fdate(x.proxima),who(x.por)])}
+  }
+  const suf={todo:'ficha',tec:'datos',hist:'historial'}[mode];
+  save(`motor-${(d.codigo||'motor').replace(/[^\w.-]+/g,'_')}-${suf}-${today()}.csv`,csv(rows));
+}
+</script>
+
+</body></html>

@@ -25,6 +25,13 @@ ACCESO DESDE AFUERA DEL TALLER (Tailscale)
 4. En la app, Ajustes > Servidor, poné http://100.x.y.z:8090 (con los números de tu PC).
    Esa dirección funciona dentro y fuera del taller.
 
+USAR EL FICHERO DESDE UNA PC
+- En cualquier PC conectada a la red del taller o con Tailscale, abrí el navegador en
+  http://100.x.y.z:8090 (la misma dirección que se pone en la app).
+- Cada técnico entra con su mismo usuario y contraseña de la app.
+- Se puede ver, cargar y editar motores, pruebas, mantenimientos y fotos, y exportar a Excel.
+  Todo lo que se cargue ahí aparece en los celulares, y al revés.
+
 DATOS Y RESPALDOS
 - Todo se guarda en la carpeta pb_data. No la borres.
 - El servidor hace un respaldo automático todos los días a las 3:00 y guarda los últimos 14.

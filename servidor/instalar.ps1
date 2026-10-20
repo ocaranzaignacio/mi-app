@@ -6,6 +6,7 @@ $exe = Join-Path $dir 'pocketbase.exe'
 $tarea = 'FicheroMotoresServidor'
 $data = Join-Path $dir 'pb_data'
 $mig = Join-Path $dir 'pb_migrations'
+$pub = Join-Path $dir 'pb_public'
 
 function Paso($t) { Write-Host ''; Write-Host "== $t" -ForegroundColor Cyan }
 
@@ -50,7 +51,7 @@ try {
   New-NetFirewallRule -DisplayName 'Fichero de Motores (8090)' -Direction Inbound -Protocol TCP -LocalPort 8090 -Action Allow -Profile Any | Out-Null
 
   Paso 'Configurando el arranque automático al encender la PC'
-  $accion = New-ScheduledTaskAction -Execute $exe -Argument "serve --http=0.0.0.0:8090 --dir `"$data`" --migrationsDir `"$mig`"" -WorkingDirectory $dir
+  $accion = New-ScheduledTaskAction -Execute $exe -Argument "serve --http=0.0.0.0:8090 --dir `"$data`" --migrationsDir `"$mig`" --publicDir `"$pub`"" -WorkingDirectory $dir
   $disparador = New-ScheduledTaskTrigger -AtStartup
   $ajustes = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
   $cuenta = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
@@ -77,6 +78,8 @@ try {
     $tipo = if ($ip.IPAddress -like '100.*') { '(Tailscale: funciona desde cualquier lugar)' } else { "(red local: $($ip.InterfaceAlias))" }
     Write-Host ("   http://{0}:8090   {1}" -f $ip.IPAddress, $tipo) -ForegroundColor White
   }
+  Write-Host ''
+  Write-Host 'Los técnicos pueden usar el fichero desde cualquier PC abriendo esas mismas direcciones en el navegador.'
   Write-Host ''
   Write-Host 'Se abre el panel en el navegador: entrá con el email y la contraseña de administrador.'
   Write-Host 'Ahí creá un usuario por técnico (colección "users").'
